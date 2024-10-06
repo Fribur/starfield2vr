@@ -1,0 +1,194 @@
+#pragma once
+#include <RE/C/CreationRendererPrivate.h>
+#include <shared/sdk/Math.hpp>
+#include <utils/PolyHook2FunctionHook.h>
+#include <_deps/directxtk12-src/Src/PlatformHelpers.h>
+#include <_deps/directxtk12-src/Src/d3dx12.h>
+#include <windef.h>
+using Microsoft::WRL::ComPtr;
+
+namespace RE {
+    struct WindowRect {
+        int x;
+        int y;
+        int cx;
+        int cy;
+    };
+    struct HWindowHolder
+    {
+        int windowX;
+        int windowY;
+        int windowCX;
+        int windowCY;
+        uint8_t pad[8];
+        LPCSTR windowName;
+        HWND parentWindowHandle;
+        uint8_t pad20[128];
+        HWND windowHandle;
+        uint8_t trailing[120];
+    };
+
+    struct DisplayGameSettings {
+        WindowRect windowRect;
+        WindowRect displayRect;
+        uint32_t flags;
+    };
+
+    static_assert(offsetof(HWindowHolder, windowHandle) == 168);
+    static_assert(sizeof(HWindowHolder) == 0x128);
+
+    struct CreationEngineSettings {
+        uint64_t unk0;
+        DisplayGameSettings displayGameSettings;
+        uint8_t pad2[2];
+        int windowHeight;
+        int windowWidth;
+        int textureHeight;
+        int textureWidth;
+        HWindowHolder *pHwindow;
+        uint8_t pad68[24];
+        uint64_t features;
+        uint8_t trainling[1024];
+    };
+
+    static_assert(offsetof(CreationEngineSettings, pHwindow) == 0x40);
+
+    struct DlssConstants {
+        uint8_t pad[0x50];
+        Matrix4x4f projectionMatrix;
+        uint8_t pad1[0xC0];
+        Matrix4x4f previousProjectionMatrix;
+    };
+
+    static_assert(offsetof(DlssConstants, projectionMatrix) == 0x50);
+    static_assert(offsetof(DlssConstants, previousProjectionMatrix) == 0x150);
+
+    // aka CameraBlocks
+    struct RenderPassConstantBufferView {
+        Vector2f unk0;
+        int unk8;
+        char pad_000C[68];
+        Matrix4x4f unk50;
+        char pad_0090[64];
+        Matrix4x4f unk0D0;
+        Vector4f unk110;
+        Vector4f unk120;
+        Vector4f unk130;
+        char pad_0140[16];
+        Matrix4x4f unk150;
+        Vector2f unk190;
+        int unk198;
+        char pad_019C[4];
+        Vector4f unk1A0;
+        Vector4f unk1B0;
+        Vector4f unk1C0;
+        Vector4f unk1D0;
+        Matrix4x4f unk1E0;
+        char pad220[68];
+        float horizontalHalfFov;
+        float verticalHalfFov;
+        float unk26C;
+        float cameraNear;
+        float cameraFar;
+        char trail[56];
+    };
+
+    static_assert(sizeof(RenderPassConstantBufferView) == 0x2B0);
+    static_assert(offsetof(RenderPassConstantBufferView, unk50) == 0x50);
+    static_assert(offsetof(RenderPassConstantBufferView, unk0D0) == 0xD0);
+
+    struct MotionVectorRenderPassConstants
+    {
+        Matrix4x4f currentProjectionMatrix;
+        Matrix4x4f previousProjectionMatrix;
+        Vector4f currentCameraPosition;
+        Vector4f previousCameraPosition;
+    };
+
+    struct D3D12Context;
+    struct D3DContextCommnadAllocatorData;
+    struct D3DContextBindData;
+#pragma pack(push, 1)
+    struct RenderGraphDataD3D12Context
+    {
+        D3D12Context*                   pD3D12Context;
+        D3DContextCommnadAllocatorData* pD3DContextCommnadAllocatorData;
+        ID3D12GraphicsCommandList*      pID3D12CommandList;
+        D3DContextBindData*             pD3DContextBindData;
+        D3DContextBindData*             pD3DContextBindDataDefault;
+        uint8_t                           gap_28[16];
+        uint64_t                          field_38;
+        uint8_t                           raw_data[4096];
+    };
+#pragma pack(pop)
+}
+
+
+class CreationEngineRendererModule
+{
+public:
+    void InstallHooks();
+
+    static inline CreationEngineRendererModule* Get()
+    {
+        static auto instance(new CreationEngineRendererModule);
+        return instance;
+    }
+
+    [[nodiscard]] inline RE::CreationEngineSettings* GetCreationEngineSettings() const
+    {
+        return *m_creationEngineSettings;
+    }
+
+    static inline int GetGlobalFrameCount()
+    {
+        auto pFrameCount = Get()->m_globalFrameCount;
+        return pFrameCount == nullptr? 0: *pFrameCount;
+    }
+
+    void SwapBuffer(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* originalBuffer, int index, int sourceSlot, int destSlot);
+
+    static inline void CopyResource(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* pSrcResource, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES srcState, D3D12_RESOURCE_STATES dstState)
+    {
+        D3D12_RESOURCE_BARRIER barriers[2]
+            = { CD3DX12_RESOURCE_BARRIER::Transition(pSrcResource, srcState, D3D12_RESOURCE_STATE_COPY_SOURCE),
+                CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, dstState, D3D12_RESOURCE_STATE_COPY_DEST) };
+        cmdList->ResourceBarrier(2, barriers);
+        cmdList->CopyResource(pDstResource, pSrcResource);
+        barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
+        barriers[0].Transition.StateAfter  = srcState;
+        barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        barriers[1].Transition.StateAfter  = dstState;
+        cmdList->ResourceBarrier(2, barriers);
+    }
+
+    __int64 onRenderGraphRenderStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, __int64 i1, __int64 i2);
+    __int64 onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2);
+    void SetWindowSize(int width, int height);
+    uintptr_t onUpdateConstantBufferView(uint8_t i, uint8_t i1, uintptr_t i2, uintptr_t i3, uintptr_t i4, double d, char i5, RE::RenderPassConstantBufferView* pView);
+private:
+    CreationEngineRendererModule()  = default;
+    ~CreationEngineRendererModule() = default;
+
+    std::unique_ptr<PolyHook2FunctionHook> m_onRenderGraphRenderStartHook{};
+    std::unique_ptr<PolyHook2FunctionHook> m_onRenderFrameStartHook{};
+    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateConstantBufferViewHook{};
+    std::unique_ptr<PolyHook2FunctionHook> taa_vfunc7_hook{};
+
+    RE::CreationRendererPrivate::RenderPass* m_startFramePass{ nullptr};
+    RE::CreationRendererPrivate::RenderPass* m_endFramePass{ nullptr};
+    RE::CreationRendererPrivate::RenderPass* m_framePass{ nullptr};
+
+    RE::CreationEngineSettings** m_creationEngineSettings{ nullptr};
+    std::mutex m_last_resolution_mutex{};
+    std::chrono::steady_clock::time_point m_last_resolution_sync{};
+
+    int* m_globalFrameCount{ nullptr };
+
+    ComPtr<ID3D12Resource> m_pastBuffer[12][4];
+
+    static uintptr_t onTaaPass(RE::CreationRendererPrivate::RenderPass* pPass, RE::CreationRendererPrivate::RenderGraphData* i, RE::CreationRendererPrivate::RenderPassData* i1);
+    void RenderGraphStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, bool before);
+    static bool ValidateResource(ID3D12Resource* source, ComPtr<ID3D12Resource> pPtr[4]);
+};
+
