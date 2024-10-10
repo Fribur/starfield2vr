@@ -499,7 +499,9 @@ private:
     bool m_is_d3d12{false};
     bool m_backbuffer_inconsistency{false};
     bool m_init_finished{false};
+public:
     bool m_has_hw_scheduling{false}; // hardware accelerated GPU scheduling
+private:
 
     // on the backburner
     bool m_depth_aided_reprojection{false};

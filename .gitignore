@@ -533,4 +533,4 @@ FodyWeavers.xsd
 
 build/
 
-contrib/Plugin*
+artifact/*

@@ -3,6 +3,7 @@
 #include <unordered_set>
 
 #include <CreationEngine/CreationEngineDirectX12Module.h>
+#include <mods/VR.hpp>
 #include <spdlog/spdlog.h>
 #include <utility/Module.hpp>
 #include <utility/Thread.hpp>
@@ -432,17 +433,20 @@ HRESULT WINAPI D3D12Hook::present(IDXGISwapChain3* swap_chain, UINT sync_interva
     d3d12->m_swap_chain = swap_chain;
 
     swap_chain->GetDevice(IID_PPV_ARGS(&d3d12->m_device));
-    auto command_queue = CreationEngineDirectX12Module::GetCommandQueue();
-    //TODO most likely reason why game is freezing if hardware scheduling is off
-    if(command_queue != nullptr) {
-        d3d12->m_command_queue = command_queue;
-    } else if (d3d12->m_device != nullptr) {
+
+    if (d3d12->m_device != nullptr) {
         if (d3d12->m_using_proton_swapchain) {
             const auto real_swapchain = *(uintptr_t*)((uintptr_t)swap_chain + d3d12->m_proton_swapchain_offset);
             d3d12->m_command_queue = *(ID3D12CommandQueue**)(real_swapchain + d3d12->m_command_queue_offset);
         } else {
             d3d12->m_command_queue = *(ID3D12CommandQueue**)((uintptr_t)swap_chain + d3d12->m_command_queue_offset);
         }
+    }
+
+    if(d3d12->m_command_queue == nullptr || IsBadReadPtr(d3d12->m_command_queue,sizeof(void*))) {
+        auto vr = VR::get();
+        auto command_queue = CreationEngineDirectX12Module::GetCommandQueue(vr->m_has_hw_scheduling);
+        d3d12->m_command_queue = command_queue;
     }
 
     if (d3d12->m_swapchain_0 == nullptr) {

@@ -4,9 +4,9 @@
 
 namespace CreationEngine::Nvidia {
     struct SlInterposterCommandQueue {
-        void* m_vtable;
+        void* vtable;
         __int64 pad;
-        ID3D12CommandQueue* m_commandQueue;
+        ID3D12CommandQueue* m_async_commandQueue;
 
     };
     struct DirectX12CommandQueueHolder {
@@ -27,7 +27,10 @@ namespace CreationEngine
 {
     struct DirectX12Module2 {
         char pad[0x28];
-        Nvidia::SlInterposterCommandQueue* m_sl_commandQueue;
+        union {
+            ID3D12CommandQueue* m_commandQueue;
+            Nvidia::SlInterposterCommandQueue* m_sl_commandQueue;
+        };
     };
     struct DirectX12Module1 {
         char pad[8];
@@ -47,13 +50,17 @@ public:
         static auto instance(new CreationEngineDirectX12Module);
         return instance;
     }
-    inline static ID3D12CommandQueue* GetCommandQueue() {
+    inline static ID3D12CommandQueue* GetCommandQueue(bool hw_scheduling) {
         auto instance = Get();
         auto pX12Module = *instance->m_directX12Module;
         if(pX12Module == nullptr) {
             return nullptr;
         }
-        return pX12Module->m_directX12Module1->m_directX12Module2->m_sl_commandQueue->m_commandQueue;
+        if(hw_scheduling) {
+            return pX12Module->m_directX12Module1->m_directX12Module2->m_sl_commandQueue->m_async_commandQueue;
+        } else {
+            return pX12Module->m_directX12Module1->m_directX12Module2->m_commandQueue;
+        }
     }
 private:
     void InstallHooks();
