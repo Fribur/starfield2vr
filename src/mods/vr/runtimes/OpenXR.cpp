@@ -241,12 +241,6 @@ VRRuntime::Error OpenXR::consume_events(std::function<void(void*)> callback) {
     return VRRuntime::Error::SUCCESS;
 }
 
-bool HORIZONTAL_SYMMETRIC = true;
-bool VERTICAL_SYMMETRIC = true;
-bool HORIZONTAL_MIRROR = false;
-bool VERTICAL_MATCHED = false;
-bool should_grow_rectangle_for_projection_cropping = false;
-
 VRRuntime::Error OpenXR::update_matrices(float nearz, float farz) {
     if (!this->session_ready || this->views.empty()) {
         return VRRuntime::Error::SUCCESS;

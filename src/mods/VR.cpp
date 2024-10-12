@@ -4105,8 +4105,11 @@ Matrix4x4f VR::get_rotation(uint32_t index) const {
 
         // HMD rotation
         if (index == 0 && !m_openxr->stage_views.empty()) {
-            return Matrix4x4f{*(glm::quat*)&m_openxr->view_space_location.pose.orientation};
-            //return Matrix4x4f{*(glm::quat*)&m_openxr->stage_views[0].pose.orientation};
+            auto mat = Matrix4x4f{runtimes::OpenXR::to_glm(m_openxr->view_space_location.pose.orientation)};
+            mat[3] = Vector4f{*(Vector3f*)&m_openxr->view_space_location.pose.position, 1.0f};
+
+            return mat;
+            return Matrix4x4f{*(glm::quat*)&m_openxr->stage_views[0].pose.orientation};
         } else if (index > 0) {
             if (index == VRRuntime::Hand::LEFT+1) {
                 return Matrix4x4f{*(glm::quat*)&m_openxr->hands[VRRuntime::Hand::LEFT].location.pose.orientation};

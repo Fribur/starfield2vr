@@ -111,7 +111,9 @@ vr::EVRCompositorError D3D12Component::on_frame(VR* vr) {
             
             vr::Texture_t left_eye{(void*)&left, vr::TextureType_DirectX12, vr::ColorSpace_Auto};
 
-            auto e = vr::VRCompositor()->Submit(vr::Eye_Left, &left_eye, &vr->m_left_bounds);
+            const auto left_bounds = vr::VRTextureBounds_t{runtime->view_bounds[0][0], runtime->view_bounds[0][2],
+                                                           runtime->view_bounds[0][1], runtime->view_bounds[0][3]};
+            auto e = vr::VRCompositor()->Submit(vr::Eye_Left, &left_eye, &left_bounds);
 
             if (e != vr::VRCompositorError_None) {
                 spdlog::error("[VR] VRCompositor failed to submit left eye: {}", (int)e);
@@ -147,8 +149,9 @@ vr::EVRCompositorError D3D12Component::on_frame(VR* vr) {
             };
 
             vr::Texture_t right_eye{(void*)&right, vr::TextureType_DirectX12, vr::ColorSpace_Auto};
-
-            auto e = vr::VRCompositor()->Submit(vr::Eye_Right, &right_eye, &vr->m_right_bounds);
+            const auto right_bounds = vr::VRTextureBounds_t{runtime->view_bounds[1][0], runtime->view_bounds[1][2],
+                                                             runtime->view_bounds[1][1], runtime->view_bounds[1][3]};
+            auto e = vr::VRCompositor()->Submit(vr::Eye_Right, &right_eye, &right_bounds);
 
             if (e != vr::VRCompositorError_None) {
                 spdlog::error("[VR] VRCompositor failed to submit right eye: {}", (int)e);

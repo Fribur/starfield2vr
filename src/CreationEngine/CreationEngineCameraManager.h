@@ -116,8 +116,8 @@ private:
     void                                   rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
     void                                   onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
     void                                   onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
-    unsigned int*                          m_globalFrameCount;
-    float*                                 m_globalWorldFov;
+    unsigned int*                          m_globalFrameCount{};
+    float*                                 m_globalWorldFov{};
 
     glm::vec3                                      prev_euler{ 0.0f, 0.0f, 0.0f };
     std::unordered_map<uintptr_t, RE::NiMatrix3>   originalRotations{};

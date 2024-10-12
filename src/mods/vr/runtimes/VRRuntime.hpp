@@ -83,7 +83,7 @@ struct VRRuntime {
     }
 
     virtual float get_ipd() const {
-        return 0.0f;
+        return this->ipd;
     }
 
     virtual Error update_matrices(float nearz, float farz) {
@@ -133,9 +133,16 @@ struct VRRuntime {
     Vector4f frustums[2]{};
     float eye_width_adjustment{1};
     float eye_height_adjustment{1};
+    float ipd{0.064f};
+
 
     float view_bounds[2][4] = {0, 1, 0, 1, 0, 1, 0, 1};
 
+    bool HORIZONTAL_SYMMETRIC = true;
+    bool VERTICAL_SYMMETRIC = true;
+    bool HORIZONTAL_MIRROR = false;
+    bool VERTICAL_MATCHED = false;
+    bool should_grow_rectangle_for_projection_cropping = false;
 
     SynchronizeStage custom_stage{SynchronizeStage::EARLY};
 };

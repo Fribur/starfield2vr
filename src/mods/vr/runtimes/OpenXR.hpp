@@ -49,9 +49,6 @@ struct OpenXR final : public VRRuntime {
     VRRuntime::Error update_render_target_size() override;
     uint32_t get_width() const override;
     uint32_t get_height() const override;
-    inline float get_ipd() const override {
-        return this->ipd;
-    }
 
     VRRuntime::Error consume_events(std::function<void(void*)> callback) override;
 
@@ -70,6 +67,14 @@ public:
     XrPath get_current_interaction_profile_path() const;
 
     std::optional<std::string> initialize_actions(const std::string& json_string);
+
+    inline static glm::quat to_glm(const XrQuaternionf& q) {
+    #ifndef GLM_FORCE_QUAT_DATA_XYZW
+            return glm::quat{ q.w, q.x, q.y, q.z };
+    #else
+            return glm::quat{ q.x, q.y, q.z, q.w };
+    #endif
+    }
 
     XrResult begin_frame();
     XrResult end_frame();
@@ -140,7 +145,6 @@ public:
     std::vector<XrView> stage_views{};
 
     float resolution_scale{1.0f};
-    float ipd{0.064f};
 
 
     struct Action {

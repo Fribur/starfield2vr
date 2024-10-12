@@ -41,7 +41,6 @@
 #include <climits>
 #include <cstdint>
 #include <limits>
-#include <stdfloat>
 
 // Error handling
 #include <cassert>
@@ -109,7 +108,6 @@
 #include <iostream>
 #include <istream>
 #include <ostream>
-#include <print>
 #include <spanstream>
 #include <sstream>
 #include <streambuf>
