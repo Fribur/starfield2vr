@@ -16,7 +16,8 @@
         "CMAKE_CXX_FLAGS": "/EHsc /fp:contract /fp:except-  /W4 /Zc:__cplusplus /D_ITERATOR_DEBUG_LEVEL=0 $env{COMPILER_FLAGS} $env{WINDOWS_FLAGS} $penv{CXXFLAGS}",
         "CMAKE_SHARED_LINKER_FLAGS": "$env{COMMONLIBSF_LINKER} $penv{SHARED_LINKER_FLAGS}",
         "USE_STARFIELD_SDK_LITE": "ON",
-        "SFVR_EXPERIMENTAL": "OFF"
+        "SFVR_EXPERIMENTAL": "OFF",
+        "USE_DXGI_HOOK": "ON"
       },
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "generator": "Ninja",
@@ -60,8 +61,7 @@
       "inherits": ["base", "clang-cl"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/fp:fast /GR- /Gw /O2",
-        "USE_DXGI_HOOK": "ON"
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/fp:fast /GR- /Gw /O2"
       }
     },
     {
@@ -69,8 +69,7 @@
       "inherits": ["base", "clang-cl"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS_DEBUG": "/Zi",
-        "USE_DXGI_HOOK": "ON"
+        "CMAKE_CXX_FLAGS_DEBUG": "/Zi"
       }
     },
     {

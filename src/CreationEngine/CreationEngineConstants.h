@@ -5,9 +5,9 @@ namespace Constants
     inline float minimumCameraRotationAngle =  0.0000099999997f;
     inline float minimumCameraRotationAngle2 = 0.00000011920929f; //epsilon float
 
-    inline float yawMultiplier = 1.1f;
-    inline float pitchMultiplier = 1.1f;
-//    inline float separation_ipd{0.068f};
+    inline float yawMultiplier = 1.0f;
+    inline float pitchMultiplier = 1.0f;
+    inline float headTrackingMultiplier = 1.0f;
 
     inline float scaleHUDX = 0.25f;
     inline float scaleHUDY = 0.25f;

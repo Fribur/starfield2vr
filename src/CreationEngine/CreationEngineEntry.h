@@ -26,6 +26,7 @@ private:
         "Left",
     };
     const ModCombo::Ptr m_dominant_eye{ ModCombo::create(generate_name("DominantEye"), s_dominant_eye) };
+    const ModSlider::Ptr m_head_tracking_multiplier{ ModSlider::create(generate_name("HeadTrackingSensitivity"), 0.5, 2.0, 1.1) };
 
-    ValueList m_options{ *m_dominant_eye };
+    ValueList m_options{ *m_dominant_eye, *m_head_tracking_multiplier };
 };

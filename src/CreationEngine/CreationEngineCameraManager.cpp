@@ -321,23 +321,23 @@ float CreationEngineCameraManager::get_fov_adjustment() const
 float CreationEngineCameraManager::get_pitch_multiplier() const
 {
     auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    auto vr = VR::get();
-    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
+//    auto vr = VR::get();
+//    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
 
-    auto frustum = vr->get_runtime()->frustums[eye];
-    auto multiplier = ((playerCamera->fov + m_fov_adjust) * Constants::DEG_TO_RAD)/ tanf(frustum[3] - frustum[2]);
+//    auto frustum = vr->get_runtime()->frustums[eye];
+    auto multiplier = (playerCamera->fov + m_fov_adjust)/ playerCamera->fov;
 //    spdlog::info("pitch multiplier {}", multiplier);
-    return multiplier;
+    return multiplier* Constants::headTrackingMultiplier;
 }
 
 float CreationEngineCameraManager::get_yaw_multiplier() const
 {
     auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    auto vr = VR::get();
-    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
+//    auto vr = VR::get();
+//    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
 
-    auto frustum = vr->get_runtime()->frustums[eye];
-    auto multiplier = ((playerCamera->fov + m_fov_adjust) * Constants::DEG_TO_RAD)/ tanf(frustum[0] - frustum[1]);
+//    auto frustum = vr->get_runtime()->frustums[eye];
+    auto multiplier = (playerCamera->fov + m_fov_adjust)/ playerCamera->fov;
 //    spdlog::info("yaw multiplier {}", multiplier);
-    return multiplier;
+    return multiplier * Constants::headTrackingMultiplier;
 }

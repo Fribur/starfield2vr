@@ -22,6 +22,10 @@ void CreationEngineEntry::on_draw_ui()
     {
         Constants::dominantEye = m_dominant_eye->value();
     }
+    if(m_head_tracking_multiplier->draw("Head Tracking Sensitivity"))
+    {
+        Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();
+    }
 }
 
 void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
@@ -29,6 +33,7 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
         option.config_load(cfg);
     }
     Constants::dominantEye = m_dominant_eye->value();
+    Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)
