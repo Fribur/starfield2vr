@@ -6,7 +6,7 @@
 //#include "CreationEngineConstants.h"
 //#include "CreationEngineGameModule.h"
 //#include "CreationEngineRendererModule.h"
-//#include <CreationEngine/RE2/offsets.h>
+//#include <CreationEngine/memory/offsets.h>
 //#include <REL/Relocation.h>
 //#include <cstdlib>
 //#include <mods/VR.hpp>

@@ -1,8 +1,12 @@
 #define DXGI_INJECTION
 #include "SFVR.hpp"
 //#include "Settings.h"
-//#include "dgxiProxy.h"
+#ifndef USE_DXGI_HOOK
 #include "dinput8proxy.h"
+#else
+#include "dgxiProxy.h"
+#endif
+
 //#include "framework.h"
 #include <CreationEngine/CreationEngineEntry.h>
 
@@ -50,7 +54,7 @@ void InitThread(HINSTANCE hModule) {
 //    hook_d3d12();
     g_framework = std::make_unique<SFVR>(hModule);
 //    g_d3d12_callback_manager = new D3D12CallBackManager(hModule);
-    CreationEngineEntry::Get();
+//    CreationEngineEntry::Get();
 //    VRFramework::XInputHook::Get()->hook_gaming_input();
     //Hooks::Install();
 }

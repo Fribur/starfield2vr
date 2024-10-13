@@ -1,7 +1,7 @@
 #pragma once
 
 #include <RE/F/FirstPersonState.h>
-#include "CreationEngine/RE2/offsets.h"
+#include "CreationEngine/memory/offsets.h"
 #include "REL/Relocation.h"
 
 namespace RE
@@ -117,7 +117,7 @@ namespace RE
 	private:
 		[[nodiscard]] inline bool QCameraEquals(CameraState a_cameraState) const {
         using func_t = decltype(&PlayerCamera::QCameraEquals);
-        static  REL::Relocation<func_t> func{ RE2::MemoryOffsets::PlayerCamera::QCameraEquals() };
+        static  REL::Relocation<func_t> func{ GameStore::MemoryOffsets::PlayerCamera::QCameraEquals() };
         return func(this, a_cameraState);
     }
 	};

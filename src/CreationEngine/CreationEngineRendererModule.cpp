@@ -7,7 +7,7 @@
 #include "CreationEngineSingletonManager.h"
 #include "REL/Relocation.h"
 #include "UpscalerAfrNvidiaModule.h"
-#include <CreationEngine/RE2/offsets.h>
+#include <CreationEngine/memory/offsets.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
 
@@ -39,19 +39,19 @@ LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 void CreationEngineRendererModule::InstallHooks() {
 
     //    REL::Relocation<RE::CreationEngineSettings**> settings{ REL::ID(878340) };
-    REL::Relocation<RE::CreationEngineSettings**> settings{ RE2::MemoryOffsets::GlobalRenderSettings() };
+    REL::Relocation<RE::CreationEngineSettings**> settings{ GameStore::MemoryOffsets::GlobalRenderSettings() };
     m_creationEngineSettings = settings.get();
 
-    REL::Relocation<int*> globalFrameCountAddr{ RE2::MemoryOffsets::CreationRenderer::GlobalFrameCount() };
+    REL::Relocation<int*> globalFrameCountAddr{ GameStore::MemoryOffsets::CreationRenderer::GlobalFrameCount() };
     m_globalFrameCount = globalFrameCountAddr.get();
 
 
-    REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{ RE2::MemoryOffsets::CreationRenderer::OnUpdateConstantBufferView() };
+    REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{ GameStore::MemoryOffsets::CreationRenderer::OnUpdateConstantBufferView() };
     m_onUpdateConstantBufferViewHook = std::make_unique<PolyHook2FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uint64_t>(&onUpdateConstantBufferViewDetour));
     m_onUpdateConstantBufferViewHook->create();
 
 //    REL::Relocation<uintptr_t> onRenderGraphRenderStartFuncAddr{ REL::ID(1079045) };
-    REL::Relocation<uintptr_t> onRenderGraphRenderStartFuncAddr{ RE2::MemoryOffsets::CreationRenderer::RenderGraphFrameStart() };
+    REL::Relocation<uintptr_t> onRenderGraphRenderStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphFrameStart() };
     m_onRenderGraphRenderStartHook
         = std::make_unique<PolyHook2FunctionHook>(onRenderGraphRenderStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderGraphRenderStartDetour));
     m_onRenderGraphRenderStartHook->create();
@@ -59,11 +59,11 @@ void CreationEngineRendererModule::InstallHooks() {
     // ID is exactly incrementing frames 149000
     // 202136 ID is function on start is frame start on end is frame end, however it is significantly decreases fps
 //    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ REL::ID(202136) };
-    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ RE2::MemoryOffsets::CreationRenderer::RenderGraphRenderPipelineExecute() };
+    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphRenderPipelineExecute() };
     m_onRenderFrameStartHook = std::make_unique<PolyHook2FunctionHook>(onRenderFrameStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderFrameStartDetour));
     m_onRenderFrameStartHook->create();
 
-    REL::Relocation<uintptr_t> taa_vfunc7_hook_addr{ RE2::MemoryOffsets::CreationRenderer::OnTaaVFunc7() };
+    REL::Relocation<uintptr_t> taa_vfunc7_hook_addr{ GameStore::MemoryOffsets::CreationRenderer::OnTaaVFunc7() };
     taa_vfunc7_hook = std::make_unique<PolyHook2FunctionHook>(taa_vfunc7_hook_addr.address(), reinterpret_cast<uint64_t>(&CreationEngineRendererModule::onTaaPass));
     taa_vfunc7_hook->create();
 }

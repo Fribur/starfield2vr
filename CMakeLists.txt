@@ -255,6 +255,18 @@ endif()
 #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 #                  COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:${PROJECT_NAME}>
 #                  COMMAND_EXPAND_LISTS)
+if(NOT USE_DXGI_HOOK)
+  set(OUTPUT_NAME "dinput8")
+else()
+  set(OUTPUT_NAME "dxgi")
+  add_compile_definitions(USE_DXGI_HOOK)
+endif()
+
+if(XBOX_STORE)
+    set(OUTPUT_NAME ${OUTPUT_NAME}_xbox)
+    add_compile_definitions(XBOX_STORE)
+endif()
+
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -266,6 +278,8 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 else()
   set(BUILD_NAME Release)
 endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
 
 add_custom_command(
   TARGET ${PROJECT_NAME}
@@ -281,7 +295,7 @@ add_custom_command(
 #   COMMAND
 #    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\Data\\SFSE\\Plugins"
   COMMAND
-    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\dinput8.dll"
+    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
   #COMMAND
   #  ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\starfield_vr.pdb"
 )

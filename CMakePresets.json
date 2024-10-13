@@ -60,7 +60,8 @@
       "inherits": ["base", "clang-cl"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/fp:fast /GR- /Gw /O2"
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/fp:fast /GR- /Gw /O2",
+        "USE_DXGI_HOOK": "ON"
       }
     },
     {
@@ -68,7 +69,8 @@
       "inherits": ["base", "clang-cl"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS_DEBUG": "/Zi"
+        "CMAKE_CXX_FLAGS_DEBUG": "/Zi",
+        "USE_DXGI_HOOK": "ON"
       }
     },
     {
@@ -98,12 +100,32 @@
       }
     },
     {
+      "name": "build-release-no-debug-clang-cl-xbox",
+      "inherits": ["base", "clang-cl"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS_RELEASE": "/O3 /fp:fast /GR- /Gw /DNDEBUG -flto -ffast-math -fvectorize -fslp-vectorize -funroll-loops -march=native",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "-flto",
+        "XBOX_STORE": "ON"
+      }
+    },
+    {
       "name": "build-release-no-debug-msvc",
       "inherits": ["base", "msvc"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/Ox /Ot /GL /fp:fast /GR- /Gw /Gy /arch:AVX2 /MP /DNDEBUG",
         "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "/LTCG /OPT:ICF=4 /OPT:REF /INCREMENTAL:NO"
+      }
+    },
+    {
+      "name": "build-release-no-debug-msvc-xbox",
+      "inherits": ["base", "msvc"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS_RELEASE": "/Ox /Ot /GL /fp:fast /GR- /Gw /Gy /arch:AVX2 /MP /DNDEBUG",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "/LTCG /OPT:ICF=4 /OPT:REF /INCREMENTAL:NO",
+        "XBOX_STORE": "ON"
       }
     }
   ],
@@ -139,10 +161,22 @@
       "description": "Optimized release build without debug symbols."
     },
     {
+      "name": "release-no-debug-msvc-xbox",
+      "displayName": "6. Release without debug symbols (MSVC) xbox",
+      "configurePreset": "build-release-no-debug-msvc-xbox",
+      "description": "Optimized release build(dxgi) without debug symbols."
+    },
+    {
       "name": "release-no-debug-clang-cl",
-      "displayName": "6. Release without debug symbols (clang-cl)",
+      "displayName": "7. Release without debug symbols (clang-cl)",
       "configurePreset": "build-release-no-debug-clang-cl",
       "description": "Optimized release build without debug symbols."
+    },
+    {
+      "name": "release-no-debug-clang-cl-xbox",
+      "displayName": "8. Release without debug symbols (clang-cl) xbox",
+      "configurePreset": "build-release-no-debug-clang-cl-xbox",
+      "description": "Optimized release build(dxgi hook) without debug symbols."
     }
   ]
 }

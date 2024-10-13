@@ -8,7 +8,7 @@
 #include "CreationEngineSingletonManager.h"
 #include "RE/P/PlayerCamera.h"
 #include "RE/S/ScaleformGFxMovie.h"
-#include <CreationEngine/RE2/offsets.h>
+#include <CreationEngine/memory/offsets.h>
 #include <REL/Relocation.h>
 #include <cstdlib>
 #include <mods/VR.hpp>
@@ -56,23 +56,23 @@ bool isValidCamera(RE::NiCamera* pCamera)
 
 void CreationEngineCameraManager::InstallHooks()
 {
-    REL::Relocation<uintptr_t> niCameraUpdateVFuncAddr{ RE2::MemoryOffsets::NiCamera::UpdateWorldVfunc()};
+    REL::Relocation<uintptr_t> niCameraUpdateVFuncAddr{ GameStore::MemoryOffsets::NiCamera::UpdateWorldVfunc()};
     m_onUpdateNiCameraHook = std::make_unique<PolyHook2FunctionHook>(niCameraUpdateVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onUpdateNiCameraDetour));
     m_onUpdateNiCameraHook->create();
-    REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ RE2::MemoryOffsets::NiCamera::SetFrustumVfunc() };
+    REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc() };
     m_onSetNimFrustumHook = std::make_unique<PolyHook2FunctionHook>(setNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
     m_onSetNimFrustumHook->create();
 
-    REL::Relocation<uintptr_t> calcNimFrustumVFuncAddr{ RE2::MemoryOffsets::NiCamera::CalcFrustumVfunc() };
+    REL::Relocation<uintptr_t> calcNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::CalcFrustumVfunc() };
     m_onCalcNimFrustumHook = std::make_unique<PolyHook2FunctionHook>(calcNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onCalcNimFrustumDetour));
     m_onCalcNimFrustumHook->create();
 
-    REL::Relocation<uintptr_t> scaleformSetViewPortAddr{ RE2::MemoryOffsets::Scaleform::Movie::SetViewportVFunc() };
+    REL::Relocation<uintptr_t> scaleformSetViewPortAddr{ GameStore::MemoryOffsets::Scaleform::Movie::SetViewportVFunc() };
     m_onScaleformSetViewPortHook = std::make_unique<PolyHook2FunctionHook>(scaleformSetViewPortAddr.address(), reinterpret_cast<uintptr_t>(&onScaleformSetViewPortDetour));
     m_onScaleformSetViewPortHook->create();
 
     //TODO ID=885900 is real framecounter used in render graph
-    REL::Relocation<unsigned int*> globalFrameCountAddr{ RE2::MemoryOffsets::GlobalFrameCounter() };
+    REL::Relocation<unsigned int*> globalFrameCountAddr{ GameStore::MemoryOffsets::GlobalFrameCounter() };
     m_globalFrameCount = globalFrameCountAddr.get();
 }
 

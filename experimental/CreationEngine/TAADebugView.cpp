@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TAADebugView.h"
-#include <CreationEngine/RE2/offsets.h>
+#include <CreationEngine/memory/offsets.h>
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>

@@ -4,7 +4,7 @@
 
 #include "UpscalerAfrNvidiaModule.h"
 #include "sl_matrix_helpers.h"
-#include <CreationEngine/RE2/offsets.h>
+#include <CreationEngine/memory/offsets.h>
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
@@ -135,7 +135,7 @@ sl::Result UpscalerAfrNvidiaModule::on_slSetConstants(sl::Constants& values, con
     static bool dynamic_set_options_hooked = false;
     if (!dynamic_set_options_hooked) {
         //        REL::Relocation<uintptr_t*> dlssSetOptionsFnaddr{REL::ID(1171973)};
-        REL::Relocation<uintptr_t*> dlssSetOptionsFnaddr{ RE2::MemoryOffsets::Streamline::SetDlssOptions() };
+        REL::Relocation<uintptr_t*> dlssSetOptionsFnaddr{ GameStore::MemoryOffsets::Streamline::SetDlssOptions() };
         if (*dlssSetOptionsFnaddr.get() != 0) {
             instance->m_dlss_set_options_hook = std::make_unique<PointerHook>((void**)dlssSetOptionsFnaddr.get(), (void*)&UpscalerAfrNvidiaModule::on_dlssSetOptions);
             spdlog::info("Hooked dlssSetOptions");

@@ -6,7 +6,7 @@
 #include "REL/Relocation.h"
 //#include "RE/C/CreationRendererContext.h"
 //#include "RE/utils.h"
-#include "CreationEngine/RE2/offsets.h"
+#include "CreationEngine/memory/offsets.h"
 
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 struct ID3D12Resource;
@@ -84,7 +84,7 @@ namespace RE::CreationRendererPrivate
 		}
 		inline static uint32_t getDXGIState(uint32_t state) {
 			using func_t = int (*)(int);
-			static REL::Relocation<func_t> getDXGIState_original{ RE2::MemoryOffsets::CreationRenderer::GetDXGIState() };
+			static REL::Relocation<func_t> getDXGIState_original{ GameStore::MemoryOffsets::CreationRenderer::GetDXGIState() };
 			return getDXGIState_original(state);
 		}
 	};
@@ -172,7 +172,7 @@ namespace RE::CreationRendererPrivate
 		[[nodiscard]] inline uintptr_t getCommandList() const
 		{
 			using func_t = uintptr_t(*)(const RenderGraphData*);
-			static REL::Relocation<func_t> getCommandListFunc{ RE2::MemoryOffsets::CreationRenderer::GetCommandList() };
+			static REL::Relocation<func_t> getCommandListFunc{ GameStore::MemoryOffsets::CreationRenderer::GetCommandList() };
 			return getCommandListFunc(this);
 		}
 

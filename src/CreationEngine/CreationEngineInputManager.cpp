@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "CreationEngineInputManager.h"
-#include <CreationEngine/RE2/offsets.h>
+#include <CreationEngine/memory/offsets.h>
 #include <REL/Relocation.h>
 #include <mods/VR.hpp>
 #include <polyhook2/Detour/x64Detour.hpp>
@@ -66,7 +66,7 @@ bool CreationEngineInputManager::Hook() {
     spdlog::info("Entering CreationEngineInputManager::Hook().");
 
 //    REL::Relocation<uintptr_t> gamepadDevicePollFuncAddr{ REL::ID(179249 ) };
-    REL::Relocation<uintptr_t> gamepadDevicePollFuncAddr{ RE2::MemoryOffsets::Gamepad::PollVfunc() };
+    REL::Relocation<uintptr_t> gamepadDevicePollFuncAddr{ GameStore::MemoryOffsets::Gamepad::PollVfunc() };
     gamepadDevicePollHook = std::make_unique<PLH::x64Detour>(static_cast<uint64_t>(gamepadDevicePollFuncAddr.address()), reinterpret_cast<uint64_t>(&gamepadDevicePollDetour), reinterpret_cast<uint64_t*>(&originalGamepadDevicePoll));
     gamepadDevicePollHook->hook();
     return true;

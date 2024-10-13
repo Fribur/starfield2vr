@@ -3,9 +3,9 @@
 #include "D3D12Hook.hpp"
 #include <Dxgi1_3.h>
 #include <dxgi.h>
-#include <interceptors/D3D12DeviceHook.h>
-#include <interceptors/DXGIFactory.h>
-#include <interceptors/PixInjector.h>
+//#include <interceptors/D3D12DeviceHook.h>
+//#include <interceptors/DXGIFactory.h>
+//#include <interceptors/PixInjector.h>
 #include <windows.h>
 
 HMODULE g_dxgi = 0;
@@ -43,35 +43,35 @@ HRESULT WINAPI d3d12_CreateDevice(_In_opt_ IUnknown* pAdapter,
     //hook detourCreateCommittedResource from ppDevice
     if (SUCCEEDED(result)) {
         spdlog::info("ID3D12Device created hooking");
-        ID3D12Device_Hook(riid, ppDevice);
+//        ID3D12Device_Hook(riid, ppDevice);
     }
     return result;
 }
 
-bool hook_d3d12()
-{
-    if(g_d3d12)
-    {
-        return true;
-    }
-    while ((g_d3d12 = GetModuleHandle("d3d12")) == NULL) {
-        Sleep(50);
-    }
-    auto status = MH_CreateHookApiEx(L"d3d12", "D3D12CreateDevice", &d3d12_CreateDevice, reinterpret_cast<void**>(&pCreateD3DDevice), reinterpret_cast<void**>(&pCreateD3DDeviceOrig));
-    if (status != MH_OK) {
-        spdlog::error("Failed to hook D3D12CreateDevice: {}", status);
-        return false;
-    }
-
-    status = MH_EnableHook(pCreateD3DDeviceOrig);
-
-    if (status != MH_OK) {
-        spdlog::error("Failed to hook D3D12CreateDevice: {}", status);
-        return false;
-    }
-    spdlog::info("Hooked D3D12CreateDevice");
-    return true;
-}
+//bool hook_d3d12()
+//{
+//    if(g_d3d12)
+//    {
+//        return true;
+//    }
+//    while ((g_d3d12 = GetModuleHandle("d3d12")) == NULL) {
+//        Sleep(50);
+//    }
+//    auto status = MH_CreateHookApiEx(L"d3d12", "D3D12CreateDevice", &d3d12_CreateDevice, reinterpret_cast<void**>(&pCreateD3DDevice), reinterpret_cast<void**>(&pCreateD3DDeviceOrig));
+//    if (status != MH_OK) {
+//        spdlog::error("Failed to hook D3D12CreateDevice: {}", status);
+//        return false;
+//    }
+//
+//    status = MH_EnableHook(pCreateD3DDeviceOrig);
+//
+//    if (status != MH_OK) {
+//        spdlog::error("Failed to hook D3D12CreateDevice: {}", status);
+//        return false;
+//    }
+//    spdlog::info("Hooked D3D12CreateDevice");
+//    return true;
+//}
 
 extern "C"
 {
