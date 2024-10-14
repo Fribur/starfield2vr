@@ -3,14 +3,15 @@
 #include <RE/N/NiMatrix3.h>
 #include <glm/vec3.hpp>
 #include <shared/sdk/Math.hpp>
-#include <utils/PolyHook2FunctionHook.h>
+#include <utils/FunctionHook.hpp>
 
 struct Matrix6x4f
 {
     float m[6][4];
 };
 
-namespace RE {
+namespace RE
+{
     struct NiUpdateData;
 }
 
@@ -53,20 +54,20 @@ namespace Scaleform::Gfx
 
             kFirstHalFlag = 1 << 8
         };
-        std::int32_t                          bufferWidth;        // 00
-        std::int32_t                          bufferHeight;       // 04
-        std::int32_t                          left;               // 08
-        std::int32_t                          top;                // 0C
-        std::int32_t                          width;              // 10
-        std::int32_t                          height;             // 14
-        std::int32_t                          scissorLeft;        // 18
-        std::int32_t                          scissorTop;         // 1C
-        std::int32_t                          scissorWidth;       // 20
-        std::int32_t                          scissorHeight;      // 24
-//        stl::enumeration<Flag, std::uint32_t> flags;              // 28
+        std::int32_t bufferWidth;         // 00
+        std::int32_t bufferHeight;        // 04
+        std::int32_t left;                // 08
+        std::int32_t top;                 // 0C
+        std::int32_t width;               // 10
+        std::int32_t height;              // 14
+        std::int32_t scissorLeft;         // 18
+        std::int32_t scissorTop;          // 1C
+        std::int32_t scissorWidth;        // 20
+        std::int32_t scissorHeight;       // 24
+                                          //        stl::enumeration<Flag, std::uint32_t> flags;              // 28
         std::uint32_t flags;              // 28
-        float                                 scale       = 1.0f; // 0x2C
-        float                                 aspectRatio = 1.0f; // 0x30
+        float         scale       = 1.0f; // 0x2C
+        float         aspectRatio = 1.0f; // 0x30
     };
 
     static_assert(offsetof(Viewport, scale) == 0x2C);
@@ -84,8 +85,8 @@ public:
         return instance;
     }
 
-    void                     onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
-    void                     onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
+    void onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
+    void onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
 
     CreationEngineCameraManager(const CreationEngineCameraManager&)            = delete;
     CreationEngineCameraManager& operator=(const CreationEngineCameraManager&) = delete;
@@ -100,28 +101,28 @@ public:
 private:
     CreationEngineCameraManager()  = default;
     ~CreationEngineCameraManager() = default;
-    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateNiCameraHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateWorldHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onPerformInputProcessingHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onCameraCutProcessEventHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onSetNimFrustumHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onCalcNimFrustumHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onScaleformSetViewPortHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onScaleformMovieSetProjectionMatrix3DHook;
-    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateWorldToCamHook;
-    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateCollisionMatrixHook;
-    std::unique_ptr<PolyHook2FunctionHook> m_onSetViewportHook;
-    std::unique_ptr<PolyHook2FunctionHook> m_onSetCameraScissorHook;
-    void                                   UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
-    void                                   rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
-    void                                   onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
-    void                                   onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
-    unsigned int*                          m_globalFrameCount{};
-    float*                                 m_globalWorldFov{};
+    std::unique_ptr<FunctionHook> m_onUpdateNiCameraHook{};
+    std::unique_ptr<FunctionHook> m_onUpdateWorldHook{};
+    std::unique_ptr<FunctionHook> m_onPerformInputProcessingHook{};
+    std::unique_ptr<FunctionHook> m_onCameraCutProcessEventHook{};
+    std::unique_ptr<FunctionHook> m_onSetNimFrustumHook{};
+    std::unique_ptr<FunctionHook> m_onCalcNimFrustumHook{};
+    std::unique_ptr<FunctionHook> m_onScaleformSetViewPortHook{};
+    std::unique_ptr<FunctionHook> m_onScaleformMovieSetProjectionMatrix3DHook{};
+    std::unique_ptr<FunctionHook> m_onUpdateWorldToCamHook{};
+    std::unique_ptr<FunctionHook> m_onUpdateCollisionMatrixHook{};
+    std::unique_ptr<FunctionHook> m_onSetViewportHook{};
+    std::unique_ptr<FunctionHook> m_onSetCameraScissorHook{};
+    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
+    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
+    void                          onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
+    void                          onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
+    unsigned int*                 m_globalFrameCount{};
+    float*                        m_globalWorldFov{};
 
-    glm::vec3                                      prev_euler{ 0.0f, 0.0f, 0.0f };
-    std::unordered_map<uintptr_t, RE::NiMatrix3>   originalRotations{};
-    float                                          m_fov_adjust{0.0f};
-    float                                          get_yaw_multiplier() const ;
-    float                                          get_pitch_multiplier() const ;
+    glm::vec3                                    prev_euler{ 0.0f, 0.0f, 0.0f };
+    std::unordered_map<uintptr_t, RE::NiMatrix3> originalRotations{};
+    float                                        m_fov_adjust{ 0.0f };
+    [[nodiscard]] float                                        get_yaw_multiplier() const;
+    [[nodiscard]] float                                        get_pitch_multiplier() const;
 };

@@ -8,7 +8,6 @@
 #include <sl_dlss.h>
 #include <utility/PointerHook.hpp>
 #include <utils/FunctionHook.hpp>
-#include <utils/PolyHook2FunctionHook.h>
 
 class UpscalerAfrNvidiaModule
 {
@@ -36,7 +35,7 @@ private:
     std::unique_ptr<PointerHook> m_dlss_set_options_hook{nullptr};
 
 
-    std::unique_ptr<PolyHook2FunctionHook> m_onGetDllsFrameToken{nullptr};
+    std::unique_ptr<FunctionHook> m_onGetDllsFrameToken{nullptr};
 
     uint32_t afr_viewport_id{1};
 

@@ -1,9 +1,9 @@
 #pragma once
 #include <RE/C/CreationRendererPrivate.h>
-#include <shared/sdk/Math.hpp>
-#include <utils/PolyHook2FunctionHook.h>
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
+#include <shared/sdk/Math.hpp>
+#include <utils/FunctionHook.hpp>
 #include <windef.h>
 using Microsoft::WRL::ComPtr;
 
@@ -170,10 +170,10 @@ private:
     CreationEngineRendererModule()  = default;
     ~CreationEngineRendererModule() = default;
 
-    std::unique_ptr<PolyHook2FunctionHook> m_onRenderGraphRenderStartHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onRenderFrameStartHook{};
-    std::unique_ptr<PolyHook2FunctionHook> m_onUpdateConstantBufferViewHook{};
-    std::unique_ptr<PolyHook2FunctionHook> taa_vfunc7_hook{};
+    std::unique_ptr<FunctionHook> m_onRenderGraphRenderStartHook{};
+    std::unique_ptr<FunctionHook> m_onRenderFrameStartHook{};
+    std::unique_ptr<FunctionHook> m_onUpdateConstantBufferViewHook{};
+    std::unique_ptr<FunctionHook> taa_vfunc7_hook{};
 
     RE::CreationRendererPrivate::RenderPass* m_startFramePass{ nullptr};
     RE::CreationRendererPrivate::RenderPass* m_endFramePass{ nullptr};

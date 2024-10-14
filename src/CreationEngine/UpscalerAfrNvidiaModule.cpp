@@ -64,7 +64,7 @@ void UpscalerAfrNvidiaModule::InstallHooks()
 //    }
 
 //        REL::Relocation<uintptr_t>  getDllsFrameTokenFnAddr{REL::ID(1078687)};
-//        m_onGetDllsFrameToken = std::make_unique<PolyHook2FunctionHook>(getDllsFrameTokenFnAddr.address(), (uintptr_t)&DlssDualView::on_ceGetNewFrameToken);
+//        m_onGetDllsFrameToken = std::make_unique<FunctionHook>(getDllsFrameTokenFnAddr.address(), (uintptr_t)&DlssDualView::on_ceGetNewFrameToken);
 //        m_onGetDllsFrameToken->create();
 
     spdlog::info("sl.interposer Hooks installed");
@@ -94,9 +94,9 @@ void UpscalerAfrNvidiaModule::InstallHooks()
 
 sl::Result UpscalerAfrNvidiaModule::on_slSetTag(sl::ViewportHandle& viewport, const sl::ResourceTag* tags, uint32_t numTags, sl::CommandBuffer* cmdBuffer)
 {
-    auto            instance    = UpscalerAfrNvidiaModule::Get();
-    auto            original_fn = instance->m_set_tag_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetTag)>();
-    auto            vr          = VR::get();
+    static auto            instance    = UpscalerAfrNvidiaModule::Get();
+    static auto            original_fn = instance->m_set_tag_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetTag)>();
+    static auto            vr          = VR::get();
     if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT) {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         return original_fn(afr_viewport_handle, tags, numTags, cmdBuffer);
@@ -107,9 +107,9 @@ sl::Result UpscalerAfrNvidiaModule::on_slSetTag(sl::ViewportHandle& viewport, co
 
 sl::Result UpscalerAfrNvidiaModule::on_slEvaluateFeature(sl::Feature feature, const sl::FrameToken& frame, sl::BaseStructure** inputs, uint32_t numInputs, sl::CommandBuffer* cmdBuffer)
 {
-    auto instance    = UpscalerAfrNvidiaModule::Get();
-    auto original_fn = instance->m_evaluate_feature_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slEvaluateFeature)>();
-    auto vr          = VR::get();
+    static auto instance    = UpscalerAfrNvidiaModule::Get();
+    static auto original_fn = instance->m_evaluate_feature_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slEvaluateFeature)>();
+    static auto vr          = VR::get();
     if (numInputs != 1) {
         spdlog::error("numInputs != 1");
     }
@@ -130,7 +130,7 @@ sl::Result UpscalerAfrNvidiaModule::on_slEvaluateFeature(sl::Feature feature, co
 // TODO vr->get_current_render_eye() == VRRuntime::Eye::RIGHT in real is left eye texture
 sl::Result UpscalerAfrNvidiaModule::on_slSetConstants(sl::Constants& values, const sl::FrameToken& frame, sl::ViewportHandle& viewport)
 {
-    auto instance = UpscalerAfrNvidiaModule::Get();
+    static auto instance = UpscalerAfrNvidiaModule::Get();
 
     static bool dynamic_set_options_hooked = false;
     if (!dynamic_set_options_hooked) {
@@ -146,8 +146,8 @@ sl::Result UpscalerAfrNvidiaModule::on_slSetConstants(sl::Constants& values, con
         }
     }
 //    spdlog::info("slSetConstants called cmaeraMotionincl={} mvecscale={}x{}", (UINT)values.cameraMotionIncluded, values.mvecScale.x, values.mvecScale.y);
-    auto original_fn = instance->m_set_constants_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetConstants)>();
-    auto vr          = VR::get();
+    static auto original_fn = instance->m_set_constants_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetConstants)>();
+    static auto vr          = VR::get();
 //    auto get_frame_token_fn = instance->m_get_new_frame_token_hook->get_original<decltype(DlssDualView::on_slGetNewFrameToken)>();
 //    uint32_t currentFrame = frame;
 //    auto half_frame = currentFrame / 2;
@@ -184,11 +184,11 @@ sl::Result UpscalerAfrNvidiaModule::on_slSetConstants(sl::Constants& values, con
 
 sl::Result UpscalerAfrNvidiaModule::on_dlssSetOptions(const sl::ViewportHandle& viewport, const sl::DLSSOptions& options)
 {
-    auto     instance         = UpscalerAfrNvidiaModule::Get();
-    auto     original_fn      = instance->m_dlss_set_options_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_dlssSetOptions)*>();
+    static auto     instance         = UpscalerAfrNvidiaModule::Get();
+    static auto     original_fn      = instance->m_dlss_set_options_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_dlssSetOptions)*>();
     uint32_t viewport_id      = viewport;
     instance->afr_viewport_id = viewport_id + 1;
-    auto vr                   = VR::get();
+    static auto vr                   = VR::get();
     if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT) {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         return original_fn(afr_viewport_handle, options);
@@ -198,8 +198,8 @@ sl::Result UpscalerAfrNvidiaModule::on_dlssSetOptions(const sl::ViewportHandle& 
 
 sl::Result UpscalerAfrNvidiaModule::on_slFreeResources(sl::Feature feature, const sl::ViewportHandle& viewport)
 {
-    auto instance    = UpscalerAfrNvidiaModule::Get();
-    auto original_fn = instance->m_free_resources_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slFreeResources)>();
+    static auto instance    = UpscalerAfrNvidiaModule::Get();
+    static auto original_fn = instance->m_free_resources_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slFreeResources)>();
     {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         original_fn(feature, afr_viewport_handle);
@@ -209,8 +209,8 @@ sl::Result UpscalerAfrNvidiaModule::on_slFreeResources(sl::Feature feature, cons
 
 sl::Result UpscalerAfrNvidiaModule::on_slAllocateResources(sl::CommandBuffer* cmdBuffer, sl::Feature feature, const sl::ViewportHandle& viewport)
 {
-    auto instance    = UpscalerAfrNvidiaModule::Get();
-    auto original_fn = instance->m_allocate_resources_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slAllocateResources)>();
+    static auto instance    = UpscalerAfrNvidiaModule::Get();
+    static auto original_fn = instance->m_allocate_resources_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slAllocateResources)>();
     uint32_t viewport_id      = viewport;
     instance->afr_viewport_id = viewport_id + 1;
     {

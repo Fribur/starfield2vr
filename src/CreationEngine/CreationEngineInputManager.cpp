@@ -8,17 +8,6 @@
 #include <CreationEngine/memory/offsets.h>
 #include <REL/Relocation.h>
 #include <mods/VR.hpp>
-#include <polyhook2/Detour/x64Detour.hpp>
-
-std::unique_ptr<PLH::x64Detour> gamepadDevicePollHook = nullptr;
-typedef void (*GamepadDevicePollDetour)(__int64 a1, double xmm2);
-GamepadDevicePollDetour originalGamepadDevicePoll = nullptr;
-
-void gamepadDevicePollDetour(__int64 a1, double xmm2) {
-    CreationEngineInputManager::Get()->UpdateDeviceState();
-    return originalGamepadDevicePoll(a1, xmm2);
-}
-
 
 CreationEngineInputManager::~CreationEngineInputManager() {
     vigem_target_remove(client, pad);
@@ -64,11 +53,12 @@ void CreationEngineInputManager::Init() {
 
 bool CreationEngineInputManager::Hook() {
     spdlog::info("Entering CreationEngineInputManager::Hook().");
-
-//    REL::Relocation<uintptr_t> gamepadDevicePollFuncAddr{ REL::ID(179249 ) };
     REL::Relocation<uintptr_t> gamepadDevicePollFuncAddr{ GameStore::MemoryOffsets::Gamepad::PollVfunc() };
-    gamepadDevicePollHook = std::make_unique<PLH::x64Detour>(static_cast<uint64_t>(gamepadDevicePollFuncAddr.address()), reinterpret_cast<uint64_t>(&gamepadDevicePollDetour), reinterpret_cast<uint64_t*>(&originalGamepadDevicePoll));
-    gamepadDevicePollHook->hook();
+    m_poll_events_hook = std::make_unique<FunctionHook>(gamepadDevicePollFuncAddr.address(), reinterpret_cast<uintptr_t>(&CreationEngineInputManager::onPollGamepadState));
+    if(!m_poll_events_hook->create()) {
+        spdlog::error("Failed to hook gamepadDevicePoll");
+        return false;
+    }
     return true;
 }
 
@@ -78,7 +68,14 @@ CreationEngineInputManager::CreationEngineInputManager(): connected(false), clie
         spdlog::error("Uh, not enough memory to do that?!");
         return;
     }
-    CreationEngineInputManager::Hook();
+    Hook();
+}
+
+void CreationEngineInputManager::onPollGamepadState(__int64 a1, double xmm2) {
+    static auto instance = CreationEngineInputManager::Get();
+    instance->UpdateDeviceState();
+    static auto original_fn = instance->m_poll_events_hook->get_original<decltype(CreationEngineInputManager::onPollGamepadState)>();
+    return original_fn(a1, xmm2);
 }
 
 void CreationEngineInputManager::UpdateDeviceState() {
@@ -86,7 +83,7 @@ void CreationEngineInputManager::UpdateDeviceState() {
         return;
     }
     XUSB_REPORT report = {0};
-    auto vr = VR::get();
+    static auto vr = VR::get();
 
     if (!vr->is_hmd_active()) {
         return;

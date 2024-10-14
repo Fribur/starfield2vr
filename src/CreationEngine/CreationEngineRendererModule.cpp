@@ -25,11 +25,11 @@ __int64 onRenderFrameStartDetour(void* rcx, __int64 rdx, __int64 r8, __int64 r9)
     return CreationEngineRendererModule::Get()->onRenderFrameStart(rcx, rdx, r8, r9);
 }
 
-std::unique_ptr<PolyHook2FunctionHook> m_onWindowMessageHook;
+std::unique_ptr<FunctionHook> m_onWindowMessageHook;
 
 LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     using func_t = decltype(WndProcDetour);
-    auto original_func = m_onWindowMessageHook->get_original<func_t>();
+    static auto original_func = m_onWindowMessageHook->get_original<func_t>();
 //    spdlog::info("Window message hit {}", message);
     return original_func(hWnd, message, wParam, lParam);
 }
@@ -47,24 +47,23 @@ void CreationEngineRendererModule::InstallHooks() {
 
 
     REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{ GameStore::MemoryOffsets::CreationRenderer::OnUpdateConstantBufferView() };
-    m_onUpdateConstantBufferViewHook = std::make_unique<PolyHook2FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uint64_t>(&onUpdateConstantBufferViewDetour));
+    m_onUpdateConstantBufferViewHook = std::make_unique<FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uint64_t>(&onUpdateConstantBufferViewDetour));
     m_onUpdateConstantBufferViewHook->create();
 
 //    REL::Relocation<uintptr_t> onRenderGraphRenderStartFuncAddr{ REL::ID(1079045) };
     REL::Relocation<uintptr_t> onRenderGraphRenderStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphFrameStart() };
-    m_onRenderGraphRenderStartHook
-        = std::make_unique<PolyHook2FunctionHook>(onRenderGraphRenderStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderGraphRenderStartDetour));
+    m_onRenderGraphRenderStartHook = std::make_unique<FunctionHook>(onRenderGraphRenderStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderGraphRenderStartDetour));
     m_onRenderGraphRenderStartHook->create();
 
     // ID is exactly incrementing frames 149000
     // 202136 ID is function on start is frame start on end is frame end, however it is significantly decreases fps
 //    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ REL::ID(202136) };
     REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphRenderPipelineExecute() };
-    m_onRenderFrameStartHook = std::make_unique<PolyHook2FunctionHook>(onRenderFrameStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderFrameStartDetour));
+    m_onRenderFrameStartHook = std::make_unique<FunctionHook>(onRenderFrameStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderFrameStartDetour));
     m_onRenderFrameStartHook->create();
 
     REL::Relocation<uintptr_t> taa_vfunc7_hook_addr{ GameStore::MemoryOffsets::CreationRenderer::OnTaaVFunc7() };
-    taa_vfunc7_hook = std::make_unique<PolyHook2FunctionHook>(taa_vfunc7_hook_addr.address(), reinterpret_cast<uint64_t>(&CreationEngineRendererModule::onTaaPass));
+    taa_vfunc7_hook = std::make_unique<FunctionHook>(taa_vfunc7_hook_addr.address(), reinterpret_cast<uint64_t>(&CreationEngineRendererModule::onTaaPass));
     taa_vfunc7_hook->create();
 }
 
@@ -78,7 +77,7 @@ std::unordered_map<uintptr_t,CameraBlockSnapshot> pastProjections{};
 __int64 CreationEngineRendererModule::onRenderGraphRenderStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, __int64 i1, __int64 i2)
 {
     using func_t = decltype(onRenderGraphRenderStartDetour);
-    auto original_func = m_onRenderGraphRenderStartHook->get_original<func_t>();
+    static auto original_func = m_onRenderGraphRenderStartHook->get_original<func_t>();
     RenderGraphStart(pGraph, pRenderGraphData, true);
     auto result = original_func(pGraph, pRenderGraphData, i1, i2);
     RenderGraphStart(pGraph, pRenderGraphData, false);
@@ -172,7 +171,7 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
 __int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2)
 {
     using func_t = decltype(onRenderFrameStartDetour);
-    auto original_func = m_onRenderFrameStartHook->get_original<func_t>();
+    static auto original_func = m_onRenderFrameStartHook->get_original<func_t>();
     auto vr = VR::get();
     if(vr->get_runtime()->ready() || Constants::cameraShake) {
         vr->m_frame_count++;
@@ -225,7 +224,7 @@ uintptr_t CreationEngineRendererModule::onUpdateConstantBufferView(uint8_t copyC
                                                                    RE::RenderPassConstantBufferView* pView)
 {
     using func_t = decltype(onUpdateConstantBufferViewDetour);
-    auto original_func = m_onUpdateConstantBufferViewHook->get_original<func_t>();
+    static auto original_func = m_onUpdateConstantBufferViewHook->get_original<func_t>();
     auto vr = VR::get();
     auto result =  original_func(copyCurrentToPast, resetHistory, i2, i3, i4, d, i5, pView);
 //    spdlog::info("update camera blocks {} index {} handles[{},{},{}] st ptr {}", fmt::ptr(pView), indexAfterPresent, cameraHandleId, cameraHandleId2, cameraHandleId3, fmt::ptr(cameraBlocks->data));

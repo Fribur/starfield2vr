@@ -28,6 +28,7 @@
 #include <utility>
 #include <variant>
 #include <version>
+#include <Windows.h>
 
 // Dynamic memory management
 #include <memory>
@@ -59,6 +60,7 @@
 #include <cwctype>
 #include <string>
 #include <string_view>
+
 
 // Containers library
 #include <array>

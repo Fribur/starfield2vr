@@ -83,12 +83,13 @@ extern "C"
 #pragma comment(linker, "/EXPORT:CreateDXGIFactory=dxgi_create_factory")
 
         load_dxgi();
-        auto result =  ((decltype(CreateDXGIFactory)*)GetProcAddress(g_dxgi, "CreateDXGIFactory"))(riid, ppFactory);
-        spdlog::info("CreateDXGIFactory called from proxy");
-        if (SUCCEEDED(result)) {
+        static auto original_fn =  ((decltype(CreateDXGIFactory)*)GetProcAddress(g_dxgi, "CreateDXGIFactory"));
+        auto result =  original_fn(riid, ppFactory);
+        spdlog::debug("CreateDXGIFactory called from proxy");
+        /*if (SUCCEEDED(result)) {
             IDXGIFactory1* pFactory = reinterpret_cast<IDXGIFactory1*>(*ppFactory);
-//            IDXGIFactory1_Hook(pFactory);
-        }
+            IDXGIFactory1_Hook(pFactory);
+        }*/
         return result;
     }
 }
@@ -103,12 +104,13 @@ extern "C"
 #pragma comment(linker, "/EXPORT:CreateDXGIFactory1=dxgi_create_factory1")
 
         load_dxgi();
-        auto result = ((decltype(CreateDXGIFactory1)*)GetProcAddress(g_dxgi, "CreateDXGIFactory1"))(riid, ppFactory);
-        spdlog::info("CreateDXGIFactory1 called from proxy");
-        if (SUCCEEDED(result)) {
+        static auto original_fn = ((decltype(CreateDXGIFactory1)*)GetProcAddress(g_dxgi, "CreateDXGIFactory1"));
+        auto result = original_fn(riid, ppFactory);
+        spdlog::debug("CreateDXGIFactory1 called from proxy");
+        /*if (SUCCEEDED(result)) {
             IDXGIFactory1* pFactory1 = reinterpret_cast<IDXGIFactory1*>(*ppFactory);
-            //IDXGIFactory1_Hook(pFactory1);
-        }
+            IDXGIFactory1_Hook(pFactory1);
+        }*/
         return result;
     }
 }
@@ -124,13 +126,14 @@ extern "C"
 
         load_dxgi();
 //        WindowsDebug::init();
-        auto result = ((decltype(CreateDXGIFactory2)*)GetProcAddress(g_dxgi, "CreateDXGIFactory2"))(Flags, riid, ppFactory);
-        spdlog::info("CreateDXGIFactory2 called from proxy");
-        if (SUCCEEDED(result)) {
-            // D3D12Hook::hook_swapchain(reinterpret_cast<IDXGIFactory2*>(*ppFactory));
+        auto static original_fn = ((decltype(CreateDXGIFactory2)*)GetProcAddress(g_dxgi, "CreateDXGIFactory2"));
+        auto result = original_fn(Flags, riid, ppFactory);
+        spdlog::debug("CreateDXGIFactory2 called from proxy");
+        /*if (SUCCEEDED(result)) {
+             D3D12Hook::hook_swapchain(reinterpret_cast<IDXGIFactory2*>(*ppFactory));
             IDXGIFactory2** pFactory2 = reinterpret_cast<IDXGIFactory2**>(ppFactory);
-//            IDXGIFactory2_Hook(*pFactory2);
-        }
+            IDXGIFactory2_Hook(*pFactory2);
+        }*/
         return result;
     }
 }
@@ -145,7 +148,8 @@ extern "C"
 #pragma comment(linker, "/EXPORT:DXGIGetDebugInterface1=dxgi_get_debug_interface")
 
         load_dxgi();
-        return ((decltype(DXGIGetDebugInterface1)*)GetProcAddress(g_dxgi, "DXGIGetDebugInterface1"))(Flags, riid, ppFactory);
+        static auto original_fn = ((decltype(DXGIGetDebugInterface1)*)GetProcAddress(g_dxgi, "DXGIGetDebugInterface1"));
+        return original_fn(Flags, riid, ppFactory);
     }
 }
 #endif

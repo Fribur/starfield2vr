@@ -19,7 +19,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake)
 set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm)
 
 # Dependencies
-CPMAddPackage("gh:brofield/simpleini@4.20")
+#CPMAddPackage("gh:brofield/simpleini@4.20")
 #CPMAddPackage("gh:stevemk14ebr/PolyHook_2_0#master")
 # Target: minhook
 include("cmake/spdlog.cmake")
@@ -27,7 +27,7 @@ include("cmake/minhook.cmake")
 include("cmake/glm.cmake")
 include("cmake/vigemclient.cmake")
 #include("cmake/safetyhook.cmake")
-include("cmake/polyhook.cmake")
+#include("cmake/polyhook.cmake")
 include("cmake/kananlib.cmake")
 include("cmake/directxtk.cmake")
 include("cmake/openxr.cmake")
@@ -113,7 +113,7 @@ target_link_libraries("${PROJECT_NAME}" PUBLIC
         bddisasm
         shlwapi
         minhook
-        PolyHook_2
+#        PolyHook_2
         ViGEmClient
         kananlib
         openxr_loader
@@ -155,7 +155,7 @@ target_precompile_headers(
   ${PROJECT_NAME}
   PRIVATE
     include/PCH.h
-    ${SimpleIni_SOURCE_DIR}/SimpleIni.h
+#    ${SimpleIni_SOURCE_DIR}/SimpleIni.h
 )
 
 target_compile_features(
@@ -294,11 +294,28 @@ add_custom_command(
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Config/${PROJECT_NAME}.ini ${CMAKE_CURRENT_SOURCE_DIR}/artifact/Mod${BUILD_NAME}/sfvr]]
 #   COMMAND
 #    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\Data\\SFSE\\Plugins"
-  COMMAND
-    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+#  COMMAND
+#    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
   #COMMAND
   #  ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\starfield_vr.pdb"
 )
+
+if(XBOX_STORE)
+  add_custom_command(
+          TARGET ${PROJECT_NAME}
+          POST_BUILD
+          COMMAND
+          ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\XboxGames\\Starfield\\Content\\dxgi.dll"
+  )
+else ()
+  add_custom_command(
+          TARGET ${PROJECT_NAME}
+          POST_BUILD
+          COMMAND
+          ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+  )
+endif()
+
 
 file(GLOB_RECURSE OUTPUT_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/artifact/*.dll)
 file(GLOB_RECURSE OUTPUT_PDBS ${CMAKE_CURRENT_SOURCE_DIR}/artifact/*.pdb)
