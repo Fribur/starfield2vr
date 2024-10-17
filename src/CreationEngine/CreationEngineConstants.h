@@ -12,7 +12,7 @@ namespace Constants
     inline float scaleHUDX = 0.25f;
     inline float scaleHUDY = 0.25f;
     inline constexpr float DEG_TO_RAD = std::numbers::pi / 180;
-    inline float lodAdjustFov = 30.0f;
+    inline float lodAdjustFov = 0.0f;
     inline float fixedCameraRoll = 0.0f;
     inline bool preventCameraRoll{false};
     inline bool cameraShake{false};

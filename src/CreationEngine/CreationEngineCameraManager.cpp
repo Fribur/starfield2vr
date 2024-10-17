@@ -316,7 +316,7 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
         vr->m_farz   = farz;
     }
     original_func(pCamera, fov, aspectRatio, nearz, farz, lodAdjust);
-    if (lodAdjust) {
+    if (lodAdjust && Constants::lodAdjustFov > 0.0f) {
         pCamera->m_fLODAdjust = ((fov + Constants::lodAdjustFov) / 90.0f);
     }
 }
