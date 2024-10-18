@@ -5,6 +5,18 @@ using namespace MemoryScan;
 
 namespace Steam::MemoryOffsets
 {
+    namespace Setting {
+        inline uintptr_t INIPrefSettingCollection() {
+            // ID 885866
+            auto val = (uintptr_t)mod + 0x6A4FF00;
+            return val;
+        }
+        inline uintptr_t INISettingCollection() {
+            // ID 885862
+            auto val = (uintptr_t)mod + 0x6A4FEE0;
+            return val;
+        }
+    }
     namespace NiCamera
     {
         inline uintptr_t SetFrustumVfunc()
@@ -223,6 +235,18 @@ namespace Steam::MemoryOffsets
 
 namespace Xbox::MemoryOffsets
 {
+    namespace Setting {
+        inline uintptr_t INIPrefSettingCollection() {
+            // ID 885866
+            auto val = (uintptr_t)mod + 0x6A8C080;
+            return val;
+        }
+        inline uintptr_t INISettingCollection() {
+            // ID 885862
+            auto val = (uintptr_t)mod + 0x6A8C060;
+            return val;
+        }
+    }
     namespace NiCamera
     {
         inline uintptr_t SetFrustumVfunc()

@@ -114,7 +114,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/Ox /Ot /GL /fp:fast /GR- /Gw /Gy /arch:AVX2 /MP /DNDEBUG",
-        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "/LTCG /OPT:ICF=4 /OPT:REF /INCREMENTAL:NO"
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "/LTCG /OPT:ICF=4 /OPT:REF /INCREMENTAL:NO",
+        "USE_STARFIELD_SDK_LITE": "ON"
       }
     },
     {
@@ -124,7 +125,8 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/Ox /Ot /GL /fp:fast /GR- /Gw /Gy /arch:AVX2 /MP /DNDEBUG",
         "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "/LTCG /OPT:ICF=4 /OPT:REF /INCREMENTAL:NO",
-        "XBOX_STORE": "ON"
+        "XBOX_STORE": "ON",
+        "USE_STARFIELD_SDK_LITE": "ON"
       }
     }
   ],

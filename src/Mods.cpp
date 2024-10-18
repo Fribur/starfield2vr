@@ -14,6 +14,7 @@
 //#include "mods/ScriptRunner.hpp"
 #include "mods/VR.hpp"
 #include "CreationEngine/CreationEngineEntry.h"
+#include "CreationEngine/GameSettingsComponent.h"
 //#include "mods/vr/games/RE8VR.hpp"
 
 #include "Mods.hpp"
@@ -30,6 +31,7 @@ Mods::Mods() {
 //
     m_mods.emplace_back(VR::get());
     m_mods.emplace_back(CreationEngineEntry::Get());
+    m_mods.emplace_back(GameSettingsComponent::Get());
 //
 //#if defined(RE8) || defined(RE7)
 //    m_mods.emplace_back(RE8VR::get());

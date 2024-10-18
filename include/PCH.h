@@ -28,7 +28,6 @@
 #include <utility>
 #include <variant>
 #include <version>
-#include <Windows.h>
 
 // Dynamic memory management
 #include <memory>
@@ -143,6 +142,7 @@
 #include <REL/REL.h>
 #include <SFSE/SFSE.h>
 #include "Plugin.h"
+#include <Windows.h>
 
 
 using namespace std::literals;
@@ -152,6 +152,14 @@ namespace logger = SFSE::log;
 namespace stl    = SFSE::stl;
 #else
 #include <spdlog/spdlog.h>
+#include <Windows.h>
+
+namespace utility {
+    // non-owning pointer
+    template <class T, class = std::enable_if_t<std::is_pointer_v<T>>>
+    using observer = T;
+}
+
 #endif
 
 template <typename T>

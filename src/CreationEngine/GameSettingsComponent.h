@@ -1,0 +1,22 @@
+#pragma once
+#include <Mod.hpp>
+
+class GameSettingsComponent : public Mod
+{
+public:
+
+    inline static std::shared_ptr<GameSettingsComponent>& Get()
+    {
+        static std::shared_ptr<GameSettingsComponent> instance{ std::make_shared<GameSettingsComponent>() };
+        return instance;
+    }
+
+    [[nodiscard]] inline std::string_view get_name() const override { return "StarFieldSettings"; }
+
+    std::optional<std::string> on_initialize() override;
+    void                       on_draw_ui() override;
+    void                       on_config_load(const utility::Config& cfg) override;
+    void                       on_config_save(utility::Config& cfg) override;
+private:
+    ValueList m_options{  };
+};
