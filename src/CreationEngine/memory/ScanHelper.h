@@ -29,15 +29,6 @@ namespace MemoryScan {
             spdlog::error("no offset is provided id={} ", a_id);
         }
 #endif
-#ifndef USE_STARFIELD_SDK_LITE
-        if(a_id > 0) {
-            auto offset = val - (uintptr_t)mod;
-            uintptr_t library_offset = REL::ID{ a_id }.offset();
-            if(offset != library_offset) {
-                spdlog::info("FuncRelocation offset does not match offset by ID for id={} scan={:x} lib={:x}", a_id, offset, library_offset);
-            }
-        }
-#endif
         return val;
     };
     inline uintptr_t InstructionRelocation(const char* pattern, UINT offset_begin, UINT instruction_size,  uintptr_t static_offset = 0 , uintptr_t a_id = 0) {
@@ -61,15 +52,6 @@ namespace MemoryScan {
             val = static_offset + (uintptr_t)mod;
         } else {
             spdlog::error("no offset is provided id={} ", a_id);
-        }
-#endif
-#ifndef USE_STARFIELD_SDK_LITE
-        if(a_id > 0) {
-            auto offset = val - (uintptr_t)mod;
-            uintptr_t library_offset = REL::ID{ a_id }.offset();
-            if(offset != library_offset) {
-                spdlog::info("AsmCodeRelocation offset does not match offset by ID for id={} scan={:x} lib={:x}", a_id, offset, library_offset);
-            }
         }
 #endif
         return val;
