@@ -14,6 +14,8 @@ set(CMAKE_OPTIMIZE_DEPENDENCIES ON)
 
 include(GNUInstallDirs)
 
+#add_compile_definitions(GLM_FORCE_LEFT_HANDED)
+
 # CPM
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake)
 set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm)

@@ -35,7 +35,9 @@ namespace OffsetsTable
         {  885886, 0x6A50080, 0x6A8C218 },
         {  873288, 0x67126B8, 0x674E678 },
         {  887308, 0x6A71BB0, 0x6AADAF0 },
-        {  865059, 0x66C5238, 0x6701178 }
+        {  865059, 0x66C5238, 0x6701178 },
+        {  166081, 0x2ACF680, 0x2AC62E0 },
+        {  865059, 0x66C5238, 0x6701178 },
     };
 
     inline std::unordered_map<int, OffsetMapping> offsetMap = [] {
@@ -49,19 +51,19 @@ namespace OffsetsTable
     inline uintptr_t GetOffset(int ID)
     {
         auto offset_map = offsetMap[ID];
-        auto offset = offset_map.STEAM_OFFSET;
+        auto offset     = offset_map.STEAM_OFFSET;
 
-        #ifdef XBOX_STORE
+#ifdef XBOX_STORE
         offset = offset_map.XBOX_OFFSET;
-        #endif
+#endif
 
 #ifndef USE_STARFIELD_SDK_LITE
-            uintptr_t library_offset = REL::ID{ a_id }.offset();
-            if(offset != library_offset) {
-                spdlog::error("Offset does not match offset by ID for id={} scan={:x} lib={:x}", a_id, offset, library_offset);
-            }
+        uintptr_t library_offset = REL::ID{ a_id }.offset();
+        if (offset != library_offset) {
+            spdlog::error("Offset does not match offset by ID for id={} scan={:x} lib={:x}", a_id, offset, library_offset);
         }
-#endif
-        return offset;
     }
+#endif
+    return offset;
+}
 } // namespace MemoryOffsets

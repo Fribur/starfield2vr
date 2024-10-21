@@ -18,5 +18,7 @@ public:
     void                       on_config_load(const utility::Config& cfg) override;
     void                       on_config_save(utility::Config& cfg) override;
 private:
-    ValueList m_options{  };
+    const ModSlider::Ptr m_weapon_fov{ ModSlider::create(generate_name("WeaponFov"), 10.0, 180.0, 110.0) };
+    const ModToggle::Ptr m_override_weapon_fov{ ModToggle::create(generate_name("OverrideWeaponFov"), false) };
+    ValueList m_options{ *m_weapon_fov, *m_override_weapon_fov };
 };

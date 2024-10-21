@@ -120,7 +120,8 @@ private:
     unsigned int*                 m_globalFrameCount{};
     float*                        m_globalWorldFov{};
 
-    glm::vec3                                    prev_euler{ 0.0f, 0.0f, 0.0f };
+//    glm::vec3                                    prev_euler{ 0.0f, 0.0f, 0.0f };
+    glm::quat                                    prev_quat{ 1.0f, 0.0f, 0.0f, 0.0f };
     std::unordered_map<uintptr_t, RE::NiMatrix3> originalRotations{};
     float                                        m_fov_adjust{ 0.0f };
     [[nodiscard]] float                                        get_yaw_multiplier() const;

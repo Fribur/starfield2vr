@@ -134,6 +134,7 @@ struct VRRuntime {
     float eye_width_adjustment{1};
     float eye_height_adjustment{1};
     float ipd{0.064f};
+    float diagonal_fov{0.0f};
 
 
     float view_bounds[2][4] = {0, 1, 0, 1, 0, 1, 0, 1};

@@ -25,8 +25,14 @@ private:
         "Right",
         "Left",
     };
+
+    inline static const std::vector<std::string> s_head_tracking_type{
+      "HeadGun",
+      "FullTrack",
+  };
     const ModCombo::Ptr m_dominant_eye{ ModCombo::create(generate_name("DominantEye"), s_dominant_eye) };
     const ModSlider::Ptr m_head_tracking_multiplier{ ModSlider::create(generate_name("HeadTrackingSensitivity"), 0.5, 2.0, 1.1) };
+    const ModCombo::Ptr m_head_tracking_type{ ModCombo::create(generate_name("HeadTrackingType"), s_head_tracking_type) };
 
-    ValueList m_options{ *m_dominant_eye, *m_head_tracking_multiplier };
+    ValueList m_options{ *m_dominant_eye, *m_head_tracking_multiplier, *m_head_tracking_type};
 };

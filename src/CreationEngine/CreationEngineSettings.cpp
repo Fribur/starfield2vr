@@ -48,18 +48,18 @@ RE::Setting* CreationEngineSettings::get_setting(std::string_view id, CreationEn
     switch (type) {
     case SettingType::kINISetting: {
         auto settings = RE::INISettingCollection::GetSingleton();
-        for(auto& setting : settings->settings) {
-            auto val = setting->to_string();
-            spdlog::debug("[{}] ptr={}: {}={}", "INI", fmt::ptr(setting), setting->GetKey().data(), val.data());
-        }
+//        for(auto& setting : settings->settings) {
+//            auto val = setting->to_string();
+//            spdlog::debug("[{}] ptr={}: {}={}", "INI", fmt::ptr(setting), setting->GetKey().data(), val.data());
+//        }
         return settings->GetSetting(id.data());
     }
     case SettingType::kINIPrefSetting: {
         auto settings = RE::INIPrefSettingCollection::GetSingleton();
-        for(auto& setting : settings->settings) {
-            auto val = setting->to_string();
-            spdlog::debug("[{}] ptr={}: {}={}", "PerfINI", fmt::ptr(setting), setting->GetKey().data(), val.data());
-        }
+//        for(auto& setting : settings->settings) {
+//            auto val = setting->to_string();
+//            spdlog::debug("[{}] ptr={}: {}={}", "PerfINI", fmt::ptr(setting), setting->GetKey().data(), val.data());
+//        }
         return settings->GetSetting(id.data());
     }
 //    case SettingType::kRegSetting: {

@@ -185,6 +185,7 @@ VRRuntime::Error OpenVR::update_matrices(float nearz, float farz){
     // don't allow the eye matrices to be derived again until after the next frame sync
 //    this->should_update_eye_matrices = false;
     this->ipd = glm::distance(this->eyes[0][3], this->eyes[1][3]);
+    this->diagonal_fov = glm::degrees(2.0f * std::atan(std::sqrt(frustums[0][0]*frustums[0][0] + frustums[0][2]*frustums[0][2])));
 
     return VRRuntime::Error::SUCCESS;
 }

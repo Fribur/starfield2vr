@@ -14,12 +14,16 @@ void GameSettingsComponent::on_draw_ui()
     ImGui::Separator();
     auto creation_engine_settings = CreationEngineSettings::Get();
     {
-
-        static float weaponFov = creation_engine_settings->get_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, 90.0f);
-        if (ImGui::SliderFloat("fFPGeometryFOV:Camera", &weaponFov, 10.0f, 270.0f)) {
-            creation_engine_settings->set_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, weaponFov);
+        m_override_weapon_fov->draw("Override Weapon Fov");
+        if (m_override_weapon_fov->value()) {
+            ImGui::SameLine();
+            if(m_weapon_fov->draw("Weapon Fov")) {
+                creation_engine_settings->set_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, m_weapon_fov->value());
+            }
         }
     }
+
+#ifdef _DEBUG
     {
         //"fNarrowAspectLimit:Display"
         static float wideAspectLimit = creation_engine_settings->get_setting("fWideAspectLimit:Display", CreationEngineSettings::SettingType::kINISetting, 1.5f);
@@ -27,7 +31,6 @@ void GameSettingsComponent::on_draw_ui()
             creation_engine_settings->set_setting("fWideAspectLimit:Display", CreationEngineSettings::SettingType::kINISetting, wideAspectLimit);
         }
     }
-#ifdef _DEBUG
     {
         static int iSizeW = creation_engine_settings->get_setting("iSize W:Display", CreationEngineSettings::SettingType::kINIPrefSetting, 1920);
         if(ImGui::InputInt("iSize W:Display", &iSizeW)) {
@@ -52,6 +55,9 @@ void GameSettingsComponent::on_draw_ui()
 void GameSettingsComponent::on_config_load(const utility::Config& cfg) {
     for (IModValue& option : m_options) {
         option.config_load(cfg);
+    }
+    if(m_override_weapon_fov->value()) {
+        CreationEngineSettings::Get()->set_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, m_weapon_fov->value());
     }
 }
 

@@ -3798,6 +3798,7 @@ void VR::on_draw_ui() {
         return;
     }
 
+    ImGui::Text("Diagonal FOV: %f", get_runtime()->diagonal_fov);
     ImGui::TextWrapped("Hardware scheduling: %s", m_has_hw_scheduling ? "Enabled" : "Disabled");
 
 /*    if (m_has_hw_scheduling) {

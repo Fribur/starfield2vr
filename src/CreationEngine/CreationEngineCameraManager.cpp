@@ -84,18 +84,33 @@ void CreationEngineCameraManager::onUpdateNiCamera(RE::NiCamera* a_camera, RE::N
     original_func(a_camera, a_data);
 }
 
+glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2) {
+    // Calculate the relative rotation
+    glm::quat relativeRotation = glm::inverse(q1) * q2;
+
+    // Ensure the rotation is along the shortest arc
+    if (relativeRotation.w < 0) {
+        relativeRotation = -relativeRotation;
+    }
+
+    return relativeRotation;
+}
+
+glm::quat extractZRotation(const glm::quat& q) {
+    // Convert quaternion to rotation matrix
+    glm::mat4 rotMat = glm::mat4_cast(q);
+
+    // Extract the Z-axis rotation angle
+    float angle = std::atan2(rotMat[0][1], rotMat[0][0]);
+
+    // Create a new quaternion with only Z-axis rotation
+    return glm::angleAxis(angle, glm::vec3(0, 0, 1));
+}
+
 void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
     //    && a_camera != CreationEngineGameModule::GetSceneGraphRoot()->starfieldScene.pStarFieldCamera
     if (a_camera != CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera) {
-        return;
-    }
-    //    g_smaa_constants.gFarPlane = a_camera->viewFrustum._far;
-    //    g_smaa_constants.gNearPlane = a_camera->viewFrustum._near;
-    if (Constants::fixedCameraRoll > 0.0f) {
-        auto rot      = glm::inverse(glm::eulerAngleY(-Constants::fixedCameraRoll));
-        auto mat_cast = (RE::NiMatrix3*)&rot;
-        rotateCamera(a_camera, mat_cast);
         return;
     }
     auto vr = VR::get();
@@ -108,17 +123,30 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         CreationEngineRendererModule::Get()->SetWindowSize(0, 0);
     }
 
-    float ipd       = vr->get_runtime()->get_ipd();
-    bool  isLeftEye = (vr->get_current_render_eye() == VRRuntime::Eye::LEFT);
+    float ipd          = vr->get_runtime()->get_ipd();
+    bool  isLeftEye    = vr->get_current_render_eye() == VRRuntime::Eye::LEFT;
+    auto  playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
+    bool  isHeadGun    = Constants::headTrackingType == 0 && playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0;
 
-    if (Constants::dominantEye == 1) {
-        a_camera->local.translate.x = isLeftEye ? 0.0f : ipd;
+    if (isHeadGun) {
+        if (Constants::dominantEye == 1) {
+            a_camera->local.translate.x = isLeftEye ? 0.0f : ipd;
+        }
+        else {
+            a_camera->local.translate.x = isLeftEye ? -ipd : 0.0f;
+        }
+        a_camera->local.translate.y = 0.0f;
+        a_camera->local.translate.z = 0.0f;
     }
     else {
-        a_camera->local.translate.x = isLeftEye ? -ipd : 0.0f;
+        auto eye_pos                = vr->get_runtime()->eyes[isLeftEye ? 0 : 1][3];
+        a_camera->local.translate.x = eye_pos.x;
+        a_camera->local.translate.y = eye_pos.y;
+        a_camera->local.translate.z = eye_pos.z;
     }
 
-    if (vr->get_current_render_eye() == VRRuntime::Eye::RIGHT || Constants::cameraShake) {
+    // TODO move update matrices logic to VR runtime so matrix calculation would be done once and only every other frame
+    if (!isLeftEye || Constants::cameraShake) {
         return;
     }
 
@@ -126,30 +154,36 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
     auto       hmd_rotation         = glm::quat{ glm::extractMatrixRotation(head_rotation) };
     auto       rot_offset           = vr->get_rotation_offset();
     const auto current_hmd_rotation = glm::normalize(rot_offset * hmd_rotation);
-    auto       euler                = euler_angles_from_steamvr(current_hmd_rotation);
 
-    auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
     // TODO detect if person is in space or ship
-    if (playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0
-        && a_camera == CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera)
-    {
+    if (isHeadGun) {
         auto player = CreationEngineSingletonManager::GetPlayerRef();
         //        RE::TransformsManager* transformsManager = RE::TransformsManager::GetSingleton();
+        auto rotation_diff = rotationDifference(prev_quat, current_hmd_rotation);
+        auto euler_diff    = euler_angles_from_steamvr(rotation_diff);
         auto pitch_multiplier = get_pitch_multiplier();
-        player->data.angle.x  = player->data.angle.x + prev_euler.x * pitch_multiplier - euler.x * pitch_multiplier;
+        player->data.angle.x  = player->data.angle.x - euler_diff.x * pitch_multiplier;
         auto  yaw_multiplier  = get_yaw_multiplier();
-        float yaw             = player->data.angle.z + euler.y * yaw_multiplier - prev_euler.y * yaw_multiplier + 2.0f * glm::pi<float>();
+        float yaw             = player->data.angle.z + euler_diff.y * yaw_multiplier + 2.0f * glm::pi<float>();
         player->data.angle.z  = std::fmod(yaw, 2.0f * glm::pi<float>());
-        auto rot              = glm::inverse(glm::eulerAngleY(-euler.z));
-        prev_euler            = euler;
+        prev_quat             = current_hmd_rotation;
+        auto roll_quat        = extractZRotation(current_hmd_rotation);
+        auto left_handed_coord      = glm::quat(-roll_quat.w, roll_quat.x, -roll_quat.z, roll_quat.y);
+        auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
         if (!Constants::preventCameraRoll) {
             auto mat_cast = (RE::NiMatrix3*)&rot;
             rotateCamera(a_camera, mat_cast);
         }
     }
     else {
-        auto rot      = glm::inverse(glm::eulerAngleXYZ(-euler.x, -euler.z, euler.y));
-        auto mat_cast = (RE::NiMatrix3*)&rot;
+        //        auto rot      = glm::inverse(glm::eulerAngleXYZ(-euler.x, -euler.z, euler.y));
+        auto left_handed_coord      = glm::quat(-current_hmd_rotation.w, current_hmd_rotation.x, -current_hmd_rotation.z, current_hmd_rotation.y);
+        auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
+        auto mat_cast               = (RE::NiMatrix3*)&rot;
+        auto eye_pos                = vr->get_runtime()->eyes[(isLeftEye ? 0 : 1)][3];
+        a_camera->local.translate.x = eye_pos.x;
+        a_camera->local.translate.y = eye_pos.y;
+        a_camera->local.translate.z = eye_pos.z;
         rotateCamera(a_camera, mat_cast);
     }
 }
@@ -290,11 +324,13 @@ void CreationEngineCameraManager::onScaleformMovieSetProjectionMatrix3D(uintptr_
     using func_t              = decltype(onScaleformMovieSetProjectionMatrix3DDetour);
     static auto original_func = m_onScaleformMovieSetProjectionMatrix3DHook->get_original<func_t>();
     /*spdlog::info("Setting projection matrix[0] {} {} {} {}", mat[0][0], mat[0][1], mat[0][2], mat[0][3]);
-    spdlog::info("Setting projection matrix[1] {} {} {} {}", mat[1][0],
+    spdlog::info("Setting projection matrix[1] {} {} {} {}",
+     * mat[1][0],
 
      * * mat[1][1], mat[1][2], mat[1][3]);
     spdlog::info("Setting projection matrix[2] {} {} {} {}", mat[2][0], mat[2][1], mat[2][2], mat[2][3]);
-    spdlog::info("Setting
+
+     * spdlog::info("Setting
 
      * * projection matrix[3] {} {} {} {}", mat[3][0], mat[3][1], mat[3][2], mat[3][3]);*/
     original_func(pInt, mat);

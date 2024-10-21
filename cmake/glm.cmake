@@ -8,3 +8,5 @@ FetchContent_Declare(
 )
 message("fetching glm")
 FetchContent_MakeAvailable(glm)
+
+#add_compile_definitions(GLM_FORCE_LEFT_HANDED)

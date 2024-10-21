@@ -22,6 +22,10 @@ void CreationEngineEntry::on_draw_ui()
     {
         Constants::dominantEye = m_dominant_eye->value();
     }
+    if(m_head_tracking_type->draw("Head Tracking Type"))
+    {
+        Constants::headTrackingType = m_head_tracking_type->value();
+    }
     if(m_head_tracking_multiplier->draw("Head Tracking Sensitivity"))
     {
         Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();

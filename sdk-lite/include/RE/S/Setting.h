@@ -1,5 +1,5 @@
 #pragma once
-#include "REL/Relocation.h"
+#include <cassert>
 
 namespace RE
 {
@@ -21,7 +21,7 @@ namespace RE
 			kRGBA
 		};
 
-		virtual ~Setting();
+		virtual ~Setting() = default;
 
 		// add
 		[[nodiscard]] virtual bool IsPrefSetting() { return false; }  // 01
@@ -61,26 +61,8 @@ namespace RE
 			return Type::kNone;
 		}
 
-		template <class T>
-		bool Is() const noexcept
-		{
-			if constexpr (std::is_same_v<T, bool>)
-				return GetType() == Type::kBool;
-			else if constexpr (std::is_same_v<T, std::int8_t>)
-				return GetType() == Type::kChar;
-			else if constexpr (std::is_same_v<T, std::uint8_t>)
-				return GetType() == Type::kUChar;
-			else if constexpr (std::is_same_v<T, std::int32_t>)
-				return GetType() == Type::kInt;
-			else if constexpr (std::is_same_v<T, std::uint32_t>)
-				return GetType() == Type::kUInt;
-			else if constexpr (std::is_same_v<T, float>)
-				return GetType() == Type::kFloat;
-			else if constexpr (std::is_convertible_v<T, std::string_view>)
-				return GetType() == Type::kString;
-			else
-				return false;
-		}
+    template <class T>
+    [[nodiscard]] bool Is() const noexcept;
 
 		[[nodiscard]] auto GetBool(const bool a_default = false) const noexcept
 		{
@@ -363,7 +345,7 @@ namespace RE
 		public Setting
 	{
 	public:
-		virtual ~SettingT();
+      ~SettingT() override = default;
 
 		static REL::Relocation<T*> collection;
 	};
@@ -377,4 +359,28 @@ namespace RE
 	extern template class SettingT<INIPrefSettingCollection>;
 	extern template class SettingT<INISettingCollection>;
 	extern template class SettingT<RegSettingCollection>;
-}
+} // namespace RE
+
+namespace RE
+{
+    template <class T>
+    [[nodiscard]] bool Setting::Is() const noexcept
+    {
+        if constexpr (std::is_same_v<T, bool>)
+            return GetType() == Type::kBool;
+        else if constexpr (std::is_same_v<T, std::int8_t>)
+            return GetType() == Type::kChar;
+        else if constexpr (std::is_same_v<T, std::uint8_t>)
+            return GetType() == Type::kUChar;
+        else if constexpr (std::is_same_v<T, std::int32_t>)
+            return GetType() == Type::kInt;
+        else if constexpr (std::is_same_v<T, std::uint32_t>)
+            return GetType() == Type::kUInt;
+        else if constexpr (std::is_same_v<T, float>)
+            return GetType() == Type::kFloat;
+        else if constexpr (std::is_convertible_v<T, std::string_view>)
+            return GetType() == Type::kString;
+        else
+            return false;
+    }
+} // namespace RE

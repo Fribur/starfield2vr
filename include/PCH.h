@@ -152,6 +152,7 @@ namespace logger = SFSE::log;
 namespace stl    = SFSE::stl;
 #else
 #include <spdlog/spdlog.h>
+#include "REL/Relocation.h"
 #include <Windows.h>
 
 namespace utility {
