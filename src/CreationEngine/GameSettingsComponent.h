@@ -17,8 +17,11 @@ public:
     void                       on_draw_ui() override;
     void                       on_config_load(const utility::Config& cfg) override;
     void                       on_config_save(utility::Config& cfg) override;
+    void                       on_frame() override;
+    void                       on_device_reset() override;
+
 private:
-    const ModSlider::Ptr m_weapon_fov{ ModSlider::create(generate_name("WeaponFov"), 10.0, 180.0, 110.0) };
+    const ModSlider::Ptr m_weapon_fov{ ModSlider::create(generate_name("WeaponFov"), 10.0, 179.0, 120.0) };
     const ModToggle::Ptr m_override_weapon_fov{ ModToggle::create(generate_name("OverrideWeaponFov"), false) };
     ValueList m_options{ *m_weapon_fov, *m_override_weapon_fov };
 };

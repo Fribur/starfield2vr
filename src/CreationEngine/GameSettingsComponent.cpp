@@ -1,9 +1,34 @@
-#include "CreationEngineSettings.h"
 #include "GameSettingsComponent.h"
+#include "CreationEngineSettings.h"
+#include <mods/VR.hpp>
 
 std::optional<std::string> GameSettingsComponent::on_initialize()
 {
     return Mod::on_initialize();
+}
+
+void GameSettingsComponent::on_frame()
+{
+
+}
+
+
+void GameSettingsComponent::on_device_reset()
+{
+    auto vr = VR::get();
+    if(vr->get_runtime()->loaded) {
+        auto creation_engine_settings = CreationEngineSettings::Get();
+        float aspect = (float)vr->get_hmd_width() / (float)vr->get_hmd_height();
+        //        spdlog::info("VR Runtime is loaded {}x{} fov={}", vr->get_hmd_width(), vr->get_hmd_height(), vr->get_runtime()->diagonal_fov);
+        creation_engine_settings->set_setting("fWideAspectLimit:Display", CreationEngineSettings::SettingType::kINISetting, aspect);
+        creation_engine_settings->set_setting("fNarrowAspectLimit:Display", CreationEngineSettings::SettingType::kINISetting, aspect);
+        creation_engine_settings->set_setting("fFPWorldFOV:Camera", CreationEngineSettings::SettingType::kINIPrefSetting, vr->get_runtime()->diagonal_fov);
+        creation_engine_settings->set_setting("fTPWorldFOV:Camera", CreationEngineSettings::SettingType::kINIPrefSetting, vr->get_runtime()->diagonal_fov);
+        creation_engine_settings->set_setting("fTPShipFOV:Camera", CreationEngineSettings::SettingType::kINIPrefSetting, vr->get_runtime()->diagonal_fov);
+        if(!m_override_weapon_fov->value()) {
+            creation_engine_settings->set_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, vr->get_runtime()->diagonal_fov);
+        }
+    };
 }
 
 void GameSettingsComponent::on_draw_ui()

@@ -60,7 +60,8 @@ RE::Setting* CreationEngineSettings::get_setting(std::string_view id, CreationEn
 //            auto val = setting->to_string();
 //            spdlog::debug("[{}] ptr={}: {}={}", "PerfINI", fmt::ptr(setting), setting->GetKey().data(), val.data());
 //        }
-        return settings->GetSetting(id.data());
+        static auto init_perf_settings = scan_settings(".?AVINIPrefSetting@@");
+        return init_perf_settings[id.data()];
     }
 //    case SettingType::kRegSetting: {
 //        auto settings = RE::RegSettingCollection::GetSingleton();

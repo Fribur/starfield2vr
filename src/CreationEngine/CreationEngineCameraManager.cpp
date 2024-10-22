@@ -157,11 +157,13 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
 
     // TODO detect if person is in space or ship
     if (isHeadGun) {
+        //TODO possible it is better to move this logic before camera update I suspect it has one frame off
         auto player = CreationEngineSingletonManager::GetPlayerRef();
         //        RE::TransformsManager* transformsManager = RE::TransformsManager::GetSingleton();
         auto rotation_diff = rotationDifference(prev_quat, current_hmd_rotation);
         auto euler_diff    = euler_angles_from_steamvr(rotation_diff);
         auto pitch_multiplier = get_pitch_multiplier();
+        //TODO use lerp insead of multiplication
         player->data.angle.x  = player->data.angle.x - euler_diff.x * pitch_multiplier;
         auto  yaw_multiplier  = get_yaw_multiplier();
         float yaw             = player->data.angle.z + euler_diff.y * yaw_multiplier + 2.0f * glm::pi<float>();
