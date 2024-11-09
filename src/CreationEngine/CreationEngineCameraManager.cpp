@@ -50,7 +50,7 @@ void onScaleformMovieSetProjectionMatrix3DDetour(uintptr_t* thisMovie, Matrix4x4
 
 bool isValidCamera(RE::NiCamera* pCamera)
 {
-    auto sceneGraphRoot = CreationEngineSingletonManager::GetSceneGraphRoot();
+    static auto sceneGraphRoot = CreationEngineSingletonManager::GetSceneGraphRoot();
     return pCamera == sceneGraphRoot->worldCamera || pCamera == sceneGraphRoot->starfieldScene.pStarFieldCamera || sceneGraphRoot->starfieldScene.pGalaxyCamera == pCamera;
 }
 
@@ -84,9 +84,10 @@ void CreationEngineCameraManager::onUpdateNiCamera(RE::NiCamera* a_camera, RE::N
     original_func(a_camera, a_data);
 }
 
-glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2) {
+glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2, float animationTime = 1.0f) {
     // Calculate the relative rotation
-    glm::quat relativeRotation = glm::inverse(q1) * q2;
+    auto endRotation = glm::slerp(q1, q2, animationTime);
+    glm::quat relativeRotation = glm::inverse(q1) * endRotation;
 
     // Ensure the rotation is along the shortest arc
     if (relativeRotation.w < 0) {
@@ -110,10 +111,10 @@ glm::quat extractZRotation(const glm::quat& q) {
 void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
     //    && a_camera != CreationEngineGameModule::GetSceneGraphRoot()->starfieldScene.pStarFieldCamera
-    if (a_camera != CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera) {
+    if (a_camera == nullptr || a_camera != CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera) {
         return;
     }
-    auto vr = VR::get();
+    static auto vr = VR::get();
     if (!vr->is_hmd_active() && !Constants::cameraShake) {
         return;
     }
@@ -123,20 +124,23 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         CreationEngineRendererModule::Get()->SetWindowSize(0, 0);
     }
 
-    float ipd          = vr->get_runtime()->get_ipd();
     bool  isLeftEye    = vr->get_current_render_eye() == VRRuntime::Eye::LEFT;
     auto  playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
     bool  isHeadGun    = Constants::headTrackingType == 0 && playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0;
 
     if (isHeadGun) {
-        if (Constants::dominantEye == 1) {
-            a_camera->local.translate.x = isLeftEye ? 0.0f : ipd;
+        auto left_eye_pos = vr->get_runtime()->eyes[0][3];
+        auto right_eye_pos = vr->get_runtime()->eyes[1][3];
+        auto eye_delta = isLeftEye ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
+        if (Constants::dominantEye == isLeftEye) {
+            a_camera->local.translate.x = 0.0f;
+            a_camera->local.translate.y = 0.0f;
+            a_camera->local.translate.z = 0.0f;
+        } else {
+            a_camera->local.translate.x = eye_delta.x;
+            a_camera->local.translate.y = eye_delta.y;
+            a_camera->local.translate.z = eye_delta.z;
         }
-        else {
-            a_camera->local.translate.x = isLeftEye ? -ipd : 0.0f;
-        }
-        a_camera->local.translate.y = 0.0f;
-        a_camera->local.translate.z = 0.0f;
     }
     else {
         auto eye_pos                = vr->get_runtime()->eyes[isLeftEye ? 0 : 1][3];
@@ -160,13 +164,12 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         //TODO possible it is better to move this logic before camera update I suspect it has one frame off
         auto player = CreationEngineSingletonManager::GetPlayerRef();
         //        RE::TransformsManager* transformsManager = RE::TransformsManager::GetSingleton();
-        auto rotation_diff = rotationDifference(prev_quat, current_hmd_rotation);
+        auto pitch_multiplier = get_head_tracking_multiplier();
+        auto rotation_diff = rotationDifference(prev_quat, current_hmd_rotation, pitch_multiplier);
         auto euler_diff    = euler_angles_from_steamvr(rotation_diff);
-        auto pitch_multiplier = get_pitch_multiplier();
         //TODO use lerp insead of multiplication
-        player->data.angle.x  = player->data.angle.x - euler_diff.x * pitch_multiplier;
-        auto  yaw_multiplier  = get_yaw_multiplier();
-        float yaw             = player->data.angle.z + euler_diff.y * yaw_multiplier + 2.0f * glm::pi<float>();
+        player->data.angle.x  = player->data.angle.x - euler_diff.x;
+        float yaw             = player->data.angle.z + euler_diff.y + 2.0f * glm::pi<float>();
         player->data.angle.z  = std::fmod(yaw, 2.0f * glm::pi<float>());
         prev_quat             = current_hmd_rotation;
         auto roll_quat        = extractZRotation(current_hmd_rotation);
@@ -182,10 +185,6 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         auto left_handed_coord      = glm::quat(-current_hmd_rotation.w, current_hmd_rotation.x, -current_hmd_rotation.z, current_hmd_rotation.y);
         auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
         auto mat_cast               = (RE::NiMatrix3*)&rot;
-        auto eye_pos                = vr->get_runtime()->eyes[(isLeftEye ? 0 : 1)][3];
-        a_camera->local.translate.x = eye_pos.x;
-        a_camera->local.translate.y = eye_pos.y;
-        a_camera->local.translate.z = eye_pos.z;
         rotateCamera(a_camera, mat_cast);
     }
 }
@@ -304,7 +303,7 @@ void CreationEngineCameraManager::onSetNiFrustumInternal(RE::NiCamera* pCamera, 
     if (!isValidCamera(pCamera)) {
         return;
     }
-    auto vr = VR::get();
+    static auto vr = VR::get();
     if (!vr->is_hmd_active()) {
         return;
     }
@@ -345,7 +344,7 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
     auto        playerCamera  = CreationEngineSingletonManager::GetPlayerCameraSingleton();
 
     //    spdlog::info("Setting frustum for camera [{}] {} camera[{} {}] setFov[{}]", fmt::ptr(pCamera), pCamera->name, playerCamera->fov, playerCamera->notViewFov, fov);
-    auto vr = VR::get();
+    static auto vr = VR::get();
 
     if (vr->is_hmd_active() && CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera == pCamera) {
         //        fov = fov + Constants::lodAdjustFov;
@@ -354,36 +353,16 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
         vr->m_farz   = farz;
     }
     original_func(pCamera, fov, aspectRatio, nearz, farz, lodAdjust);
-    if (lodAdjust && Constants::lodAdjustFov > 0.0f) {
-        pCamera->m_fLODAdjust = ((fov + Constants::lodAdjustFov) / 90.0f);
-    }
 }
 
 float CreationEngineCameraManager::get_fov_adjustment() const
 {
-    return (m_fov_adjust * Constants::DEG_TO_RAD) / 2;
+    return tanf((m_fov_adjust * Constants::DEG_TO_RAD) / 2.0f);
 }
 
-float CreationEngineCameraManager::get_pitch_multiplier() const
+float CreationEngineCameraManager::get_head_tracking_multiplier() const
 {
-    auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    //    auto vr = VR::get();
-    //    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
-
-    //    auto frustum = vr->get_runtime()->frustums[eye];
+    static auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
     auto multiplier = (playerCamera->fov + m_fov_adjust) / playerCamera->fov;
-    //    spdlog::info("pitch multiplier {}", multiplier);
-    return multiplier * Constants::headTrackingMultiplier;
-}
-
-float CreationEngineCameraManager::get_yaw_multiplier() const
-{
-    auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    //    auto vr = VR::get();
-    //    auto eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
-
-    //    auto frustum = vr->get_runtime()->frustums[eye];
-    auto multiplier = (playerCamera->fov + m_fov_adjust) / playerCamera->fov;
-    //    spdlog::info("yaw multiplier {}", multiplier);
     return multiplier * Constants::headTrackingMultiplier;
 }

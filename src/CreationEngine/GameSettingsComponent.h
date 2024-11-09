@@ -19,6 +19,7 @@ public:
     void                       on_config_save(utility::Config& cfg) override;
     void                       on_frame() override;
     void                       on_device_reset() override;
+    std::optional<std::string> on_initialize_d3d_thread() override;
 
 private:
     const ModSlider::Ptr m_weapon_fov{ ModSlider::create(generate_name("WeaponFov"), 10.0, 179.0, 120.0) };

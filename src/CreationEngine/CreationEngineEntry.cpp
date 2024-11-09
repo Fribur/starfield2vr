@@ -38,6 +38,7 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     }
     Constants::dominantEye = m_dominant_eye->value();
     Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();
+    Constants::headTrackingType = m_head_tracking_type->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)

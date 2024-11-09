@@ -1,8 +1,6 @@
 #include "CreationEngineSettings.h"
 #include "utility/RTTI.hpp"
 #include <utility/Module.hpp>
-#include <utility/Scan.hpp>
-#include "RE/I/INIPrefSettingCollection.h"
 #include "RE/I/INISettingCollection.h"
 
 template<typename T>
@@ -19,6 +17,7 @@ uintptr_t find(const uintptr_t haystack, const uintptr_t endptr, uint64_t * cons
     }
     return 0;
 }
+
 RE::Setting* CreationEngineSettings::get_setting(std::string_view id, CreationEngineSettings::SettingType type)
 {
     auto scan_settings = [&](auto& vtable) {
@@ -48,18 +47,9 @@ RE::Setting* CreationEngineSettings::get_setting(std::string_view id, CreationEn
     switch (type) {
     case SettingType::kINISetting: {
         auto settings = RE::INISettingCollection::GetSingleton();
-//        for(auto& setting : settings->settings) {
-//            auto val = setting->to_string();
-//            spdlog::debug("[{}] ptr={}: {}={}", "INI", fmt::ptr(setting), setting->GetKey().data(), val.data());
-//        }
         return settings->GetSetting(id.data());
     }
     case SettingType::kINIPrefSetting: {
-        auto settings = RE::INIPrefSettingCollection::GetSingleton();
-//        for(auto& setting : settings->settings) {
-//            auto val = setting->to_string();
-//            spdlog::debug("[{}] ptr={}: {}={}", "PerfINI", fmt::ptr(setting), setting->GetKey().data(), val.data());
-//        }
         static auto init_perf_settings = scan_settings(".?AVINIPrefSetting@@");
         return init_perf_settings[id.data()];
     }

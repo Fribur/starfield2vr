@@ -1,10 +1,18 @@
 #include "GameSettingsComponent.h"
+#include "CreationEngineRendererModule.h"
 #include "CreationEngineSettings.h"
 #include <mods/VR.hpp>
 
 std::optional<std::string> GameSettingsComponent::on_initialize()
 {
+    spdlog::info("GameSettingsComponent::on_initialize");
     return Mod::on_initialize();
+}
+
+std::optional<std::string> GameSettingsComponent::on_initialize_d3d_thread()
+{
+    spdlog::info("GameSettingsComponent::on_initialize_d3d_thread");
+    return Mod::on_initialize_d3d_thread();
 }
 
 void GameSettingsComponent::on_frame()
@@ -15,9 +23,10 @@ void GameSettingsComponent::on_frame()
 
 void GameSettingsComponent::on_device_reset()
 {
+    spdlog::info("GameSettingsComponent::on_device_reset");
     auto vr = VR::get();
     if(vr->get_runtime()->loaded) {
-        auto creation_engine_settings = CreationEngineSettings::Get();
+        static auto creation_engine_settings = CreationEngineSettings::Get();
         float aspect = (float)vr->get_hmd_width() / (float)vr->get_hmd_height();
         //        spdlog::info("VR Runtime is loaded {}x{} fov={}", vr->get_hmd_width(), vr->get_hmd_height(), vr->get_runtime()->diagonal_fov);
         creation_engine_settings->set_setting("fWideAspectLimit:Display", CreationEngineSettings::SettingType::kINISetting, aspect);
