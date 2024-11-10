@@ -4,13 +4,13 @@
 #include <utility/Address.hpp>
 #include <windows.h>
 
-class FunctionHook {
+class MinhookFunctionHook {
 public:
-    FunctionHook() = delete;
-    FunctionHook(const FunctionHook& other) = delete;
-    FunctionHook(FunctionHook&& other) = delete;
-    FunctionHook(Address target, Address destination);
-    virtual ~FunctionHook();
+    MinhookFunctionHook() = delete;
+    MinhookFunctionHook(const MinhookFunctionHook& other) = delete;
+    MinhookFunctionHook(MinhookFunctionHook&& other) = delete;
+    MinhookFunctionHook(Address target, Address destination);
+    virtual ~MinhookFunctionHook();
 
     bool create();
 
@@ -24,8 +24,8 @@ public:
 
     auto is_valid() const { return m_original != 0; }
 
-    FunctionHook& operator=(const FunctionHook& other) = delete;
-    FunctionHook& operator=(FunctionHook&& other) = delete;
+    MinhookFunctionHook& operator=(const MinhookFunctionHook& other) = delete;
+    MinhookFunctionHook& operator=(MinhookFunctionHook&& other) = delete;
 
 private:
     uintptr_t m_target{0};

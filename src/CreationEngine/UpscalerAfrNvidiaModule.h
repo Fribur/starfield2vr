@@ -7,7 +7,7 @@
 #include <sl.h>
 #include <sl_dlss.h>
 #include <utility/PointerHook.hpp>
-#include <utils/FunctionHook.hpp>
+#include <utils/FunctionHook.h>
 
 class UpscalerAfrNvidiaModule
 {

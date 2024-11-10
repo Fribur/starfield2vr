@@ -1,6 +1,6 @@
 #pragma once
 //#include "RE/MultiCamervaViewModule.h"
-#include "utils/FunctionHook.hpp"
+#include "utils/FunctionHook.h"
 #include <memory>
 
 typedef void* (*updateProjectionMatrixF)(void* translate, void* rotate, void* pFrustum, char orpho, void* out);

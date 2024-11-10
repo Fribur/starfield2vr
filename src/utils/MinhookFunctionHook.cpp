@@ -1,13 +1,13 @@
 #include <MinHook.h>
 #include <spdlog/spdlog.h>
 
-#include "FunctionHook.hpp"
+#include "MinhookFunctionHook.hpp"
 
 using namespace std;
 
 bool g_isMinHookInitialized{false};
 
-FunctionHook::FunctionHook(Address target, Address destination)
+MinhookFunctionHook::MinhookFunctionHook(Address target, Address destination)
     : m_target{0}
       , m_destination{0}
       , m_original{0} {
@@ -18,7 +18,7 @@ FunctionHook::FunctionHook(Address target, Address destination)
         g_isMinHookInitialized = true;
     }
 
-    // Create the hook. Call create afterwards to prevent race conditions accessing FunctionHook before it leaves its constructor.
+    // Create the hook. Call create afterwards to prevent race conditions accessing MinhookFunctionHook before it leaves its constructor.
     if (auto status = MH_CreateHook(target.as<LPVOID>(), destination.as<LPVOID>(), (LPVOID*)&m_original); status == MH_OK) {
         m_target = target;
         m_destination = destination;
@@ -29,13 +29,13 @@ FunctionHook::FunctionHook(Address target, Address destination)
     }
 }
 
-FunctionHook::~FunctionHook() {
+MinhookFunctionHook::~MinhookFunctionHook() {
     remove();
 }
 
-bool FunctionHook::create() {
+bool MinhookFunctionHook::create() {
     if (m_target == 0 || m_destination == 0 || m_original == 0) {
-        spdlog::error("FunctionHook not initialized");
+        spdlog::error("MinhookFunctionHook not initialized");
         return false;
     }
 
@@ -52,7 +52,7 @@ bool FunctionHook::create() {
     return true;
 }
 
-bool FunctionHook::remove() {
+bool MinhookFunctionHook::remove() {
     // Don't try to remove invalid hooks.
     if (m_original == 0) {
         return true;

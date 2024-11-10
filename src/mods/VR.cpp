@@ -17,11 +17,11 @@
 //#include "sdk/Renderer.hpp"
 #include "utility/REMath.hpp"
 
-#include "utility/Scan.hpp"
-#include "utils/FunctionHook.hpp"
-#include "utility/Module.hpp"
 #include "utility/Memory.hpp"
+#include "utility/Module.hpp"
 #include "utility/Registry.hpp"
+#include "utility/Scan.hpp"
+#include "utils/FunctionHook.h"
 
 #include "VR.hpp"
 

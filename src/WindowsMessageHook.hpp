@@ -3,7 +3,7 @@
 #include <functional>
 
 #include <Windows.h>
-#include <utils/FunctionHook.hpp>
+#include <utils/FunctionHook.h>
 
 #include "utility/PointerHook.hpp"
 #define RE_TOGGLE_CURSOR WM_APP + 1

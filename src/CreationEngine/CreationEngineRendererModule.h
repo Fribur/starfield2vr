@@ -3,7 +3,7 @@
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <shared/sdk/Math.hpp>
-#include <utils/FunctionHook.hpp>
+#include <utils/FunctionHook.h>
 #include <windef.h>
 using Microsoft::WRL::ComPtr;
 

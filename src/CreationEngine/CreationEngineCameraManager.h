@@ -3,7 +3,7 @@
 #include <RE/N/NiMatrix3.h>
 #include <glm/vec3.hpp>
 #include <shared/sdk/Math.hpp>
-#include <utils/FunctionHook.hpp>
+#include <utils/FunctionHook.h>
 
 struct Matrix6x4f
 {
