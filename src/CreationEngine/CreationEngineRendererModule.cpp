@@ -190,15 +190,25 @@ __int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i,
 
 void CreationEngineRendererModule::SetWindowSize(int width, int height)
 {
-    {
-        std::lock_guard _{ m_last_resolution_mutex };
-        if (*m_creationEngineSettings == nullptr || (std::chrono::steady_clock::now() - m_last_resolution_sync) < std::chrono::seconds(5)) {
-            return;
-        }
-        m_last_resolution_sync = std::chrono::steady_clock::now();
+    static std::atomic<bool> inside_change{ false };
+    static int               last_synced_frame{ 3000 };
+    auto                     fc = CreationEngineRendererModule::GetGlobalFrameCount();
+    if(inside_change.exchange(true)) {
+        return;
     }
+
+    if (*m_creationEngineSettings == nullptr || (fc - last_synced_frame) < 5*72) {
+        inside_change.store(false);
+        return;
+    }
+    last_synced_frame = fc;
+    inside_change.store(false);
+
     if (width == 0 || height == 0) {
         auto vr = VR::get();
+        if (!vr->is_hmd_active()) {
+            return;
+        }
         width   = vr->get_hmd_width();
         height  = vr->get_hmd_height();
     }
