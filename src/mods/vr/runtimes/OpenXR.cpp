@@ -2,9 +2,10 @@
 #include <filesystem>
 #include <fstream>
 
+#include <CreationEngine/models/ModSettingsStore.h>
+#include <imgui.h>
 #include <json.hpp>
 #include <utility/String.hpp>
-#include <imgui.h>
 
 #include "SFVR.hpp"
 
@@ -1363,39 +1364,70 @@ XrResult OpenXR::end_frame() {
 
     std::vector<XrCompositionLayerBaseHeader*> layers{};
     std::vector<XrCompositionLayerProjectionView> projection_layer_views{};
+    std::vector<XrCompositionLayerQuad> quad_layers{};
+
 
     // we CANT push the layers every time, it cause some layer error
     // in xrEndFrame, so we must only do it when shouldRender is true
     if (this->frame_state.shouldRender == XR_TRUE) {
         projection_layer_views.resize(this->stage_views.size(), {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW});
+        if (!ModSettingsStore::shouldShowFlatScreen()) {
+            for (auto i = 0; i < projection_layer_views.size(); ++i) {
+                const auto& swapchain = this->swapchains[i];
 
-        for (auto i = 0; i < projection_layer_views.size(); ++i) {
-            const auto& swapchain = this->swapchains[i];
+                projection_layer_views[i].type               = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+                projection_layer_views[i].pose               = this->stage_views[i].pose;
+                projection_layer_views[i].fov                = this->stage_views[i].fov;
+                projection_layer_views[i].subImage.swapchain = swapchain.handle;
+                int32_t offset_x = 0, offset_y = 0, extent_x = 0, extent_y = 0;
+                int     texture_area_width = swapchain.width;
 
-            projection_layer_views[i].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
-            projection_layer_views[i].pose = this->stage_views[i].pose;
-            projection_layer_views[i].fov = this->stage_views[i].fov;
-            projection_layer_views[i].subImage.swapchain = swapchain.handle;
-            int32_t offset_x = 0, offset_y = 0, extent_x = 0, extent_y = 0;
-            int texture_area_width = swapchain.width;
+                offset_x = (int32_t)(view_bounds[i][0] * (float)texture_area_width);
+                extent_x = (int32_t)(view_bounds[i][1] * (float)texture_area_width) - offset_x;
 
-            offset_x = (int32_t)(view_bounds[i][0] * (float)texture_area_width);
-            extent_x = (int32_t)(view_bounds[i][1] * (float)texture_area_width) - offset_x;
+                offset_y = (int32_t)(view_bounds[i][2] * (float)swapchain.height);
+                extent_y = (int32_t)(view_bounds[i][3] * (float)swapchain.height) - offset_y;
 
-            offset_y = (int32_t)(view_bounds[i][2] * (float)swapchain.height);
-            extent_y = (int32_t)(view_bounds[i][3] * (float)swapchain.height) - offset_y;
+                projection_layer_views[i].subImage.imageRect.offset = { offset_x, offset_y };
+                projection_layer_views[i].subImage.imageRect.extent = { extent_x, extent_y };
+                //            projection_layer_views[i].subImage.imageRect.offset = {0, 0};
+                //            projection_layer_views[i].subImage.imageRect.extent = {swapchain.width, swapchain.height};
+            }
+            XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
+            layer.space = this->stage_space;
+            layer.viewCount = (uint32_t)projection_layer_views.size();
+            layer.views = projection_layer_views.data();
+            layers.push_back((XrCompositionLayerBaseHeader*)&layer);
+        } else {
+            quad_layers.resize(this->stage_views.size());
+            // Initialize quad layers for each eye
+            for (size_t i = 0; i < this->stage_views.size(); ++i) {
+                const auto& swapchain = this->swapchains[i];
 
-            projection_layer_views[i].subImage.imageRect.offset = {offset_x, offset_y};
-            projection_layer_views[i].subImage.imageRect.extent = {extent_x, extent_y};
-//            projection_layer_views[i].subImage.imageRect.offset = {0, 0};
-//            projection_layer_views[i].subImage.imageRect.extent = {swapchain.width, swapchain.height};
+                quad_layers[i] = {XR_TYPE_COMPOSITION_LAYER_QUAD};
+                quad_layers[i].next = nullptr;
+                quad_layers[i].layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+                quad_layers[i].space = this->stage_space;
+                quad_layers[i].eyeVisibility = (i == 0) ? XR_EYE_VISIBILITY_LEFT : XR_EYE_VISIBILITY_RIGHT;
+
+                // Configure swapchain
+                quad_layers[i].subImage.swapchain = swapchain.handle;
+                quad_layers[i].subImage.imageRect.offset = {0, 0};
+                quad_layers[i].subImage.imageRect.extent = {(int32_t)swapchain.width, (int32_t)swapchain.height};
+
+                // Set pose relative to view
+                quad_layers[i].pose.orientation = {0.0f, 0.0f, 0.0f, 1.0f};
+                quad_layers[i].pose.position = this->stage_views[i].pose.position;
+                // Move 2m forward from eye position
+                quad_layers[i].pose.position.z -= ModSettingsStore::gStore.internalSettings.flatScreenDistance;
+
+                // Set size (2m wide, maintain aspect ratio)
+                float aspect_ratio = (float)swapchain.width / (float)swapchain.height;
+                quad_layers[i].size = {2.0f, 2.0f / aspect_ratio};
+
+                layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&quad_layers[i]));
+            }
         }
-
-        XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
-        layer.space = this->stage_space;
-        layer.viewCount = (uint32_t)projection_layer_views.size();
-        layer.views = projection_layer_views.data();
-        layers.push_back((XrCompositionLayerBaseHeader*)&layer);
     }
 
     XrFrameEndInfo frame_end_info{XR_TYPE_FRAME_END_INFO};

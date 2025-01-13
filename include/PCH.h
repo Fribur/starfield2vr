@@ -163,6 +163,18 @@ namespace utility {
 
 #endif
 
+
+constexpr unsigned int djb2Hash(const char* str, int index = 0)
+{
+    return !str[index] ? 0x1505 : (djb2Hash(str, index + 1) * 0x21) ^ str[index];
+}
+
+constexpr unsigned int operator"" _DJB(const char str[], size_t size)
+{
+    return djb2Hash(str);
+}
+
+
 template <typename T>
 class Singleton
 {

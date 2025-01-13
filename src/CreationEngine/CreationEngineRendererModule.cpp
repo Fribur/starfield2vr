@@ -8,6 +8,7 @@
 #include "REL/Relocation.h"
 #include "UpscalerAfrNvidiaModule.h"
 #include <CreationEngine/memory/offsets.h>
+#include <CreationEngine/models/ModSettingsStore.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
 
@@ -149,6 +150,8 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
     auto vr = VR::get();
     if (m_startFramePass == pGraph) {
         if (before) {
+            ModSettingsStore::resetGameState();
+
             vr->on_pre_begin_rendering(nullptr);
         }
         else {
@@ -182,7 +185,11 @@ __int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i,
     if (vr->get_runtime()->ready() || Constants::cameraShake) {
         vr->m_frame_count++;
     }
+
     g_framework->run_imgui_frame(false);
+//    vr->on_pre_begin_rendering(nullptr);
+//    vr->on_begin_rendering(nullptr);
+
     //    spdlog::info("Frame count increase {}", vr->m_frame_count);
     auto result = original_func(pVoid, i, i1, i2);
     return result;

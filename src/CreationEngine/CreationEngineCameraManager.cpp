@@ -9,19 +9,10 @@
 #include "RE/P/PlayerCamera.h"
 #include "RE/S/ScaleformGFxMovie.h"
 #include <CreationEngine/memory/offsets.h>
+#include <CreationEngine/models/ModSettingsStore.h>
 #include <REL/Relocation.h>
 #include <cstdlib>
 #include <mods/VR.hpp>
-
-constexpr unsigned int djb2Hash(const char* str, int index = 0)
-{
-    return !str[index] ? 0x1505 : (djb2Hash(str, index + 1) * 0x21) ^ str[index];
-}
-
-constexpr unsigned int operator"" _DJB(const char str[], size_t size)
-{
-    return djb2Hash(str);
-}
 
 void onUpdateNiCameraDetour(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
@@ -115,7 +106,8 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         return;
     }
     static auto vr = VR::get();
-    if (!vr->is_hmd_active() && !Constants::cameraShake) {
+
+    if (!vr->is_hmd_active() && !Constants::cameraShake && ModSettingsStore::shouldShowFlatScreen()) {
         return;
     }
     //    spdlog::info("Updating world  camera fc[{}]", vr->m_frame_count);
@@ -123,6 +115,7 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
     if (!Constants::cameraShake) {
         CreationEngineRendererModule::Get()->SetWindowSize(0, 0);
     }
+
 
     bool  isLeftEye    = vr->get_current_render_eye() == VRRuntime::Eye::LEFT;
     auto  playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
@@ -225,8 +218,13 @@ const std::unordered_map<uint32_t, MenuSettings> menu_settings = {
 
 void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
 {
-    auto vr = VR::get();
-    if (!vr->is_hmd_active() || vr->m_left_trigger_down) {
+
+    static auto vr = VR::get();
+    auto  cc                = reinterpret_cast<RE::Scaleform::GFx::MovieImpl*>(thisMovie);
+    auto  file_url          = cc->GetMovieDef()->GetFileURL();
+    auto  hash              = djb2Hash(file_url);
+    ModSettingsStore::renderMenu(file_url);
+    if (ModSettingsStore::shouldShowFlatScreen()|| !vr->is_hmd_active()) {
         return;
     }
     auto hmd_width              = vr->get_hmd_width();
@@ -238,9 +236,6 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
     int   offset_top        = 0;
     float width_multiplier  = 1.0f;
     float height_multiplier = 1.0f;
-    auto  cc                = reinterpret_cast<RE::Scaleform::GFx::MovieImpl*>(thisMovie);
-    auto  file_url          = cc->GetMovieDef()->GetFileURL();
-    auto  hash              = djb2Hash(file_url);
 
     MenuSettings settings = { 0.4f, 0.35f, 0 }; // Default settings
     auto         it       = menu_settings.find(hash);

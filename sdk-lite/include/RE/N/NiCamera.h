@@ -120,32 +120,32 @@ namespace RE
 		//camera is facing away from the worldPt.
 		//Note: The Z component is very small due to Starfield's unit scale.
 		//i.e. distance from player to camera when the camera is close is ~0.0004
-		NiPoint3 WorldToScreen(const NiPoint3& worldPt)
+		NiPoint3 WorldToScreen(const NiPoint3& a_worldPt)
 		{
 			NiPoint3 result{ 0.0f, 0.0f, -1.0f };
-			float    worldDiffRotated = (((worldPt.y - world.translate.y) * world.rotate[0][1]) +
-                                         ((worldPt.x - world.translate.x) * world.rotate[0][0]) +
-                                         ((worldPt.z - world.translate.z) * world.rotate[0][2])) -
+			float    worldDiffRotated = (((a_worldPt.y - world.translate.y) * world.rotate[0][1]) +
+                                         ((a_worldPt.x - world.translate.x) * world.rotate[0][0]) +
+                                         ((a_worldPt.z - world.translate.z) * world.rotate[0][2])) -
 			                         viewFrustum._near;
 
 			result.z = worldDiffRotated * (1.0f / (viewFrustum._far - viewFrustum._near));
 
-			float trace = (worldPt.x * worldToCam[3][0]) + (worldPt.y * worldToCam[3][1]) + ((worldPt.z * worldToCam[3][2]) + worldToCam[3][3]);
+			float trace = (a_worldPt.x * worldToCam[3][0]) + (a_worldPt.y * worldToCam[3][1]) + ((a_worldPt.z * worldToCam[3][2]) + worldToCam[3][3]);
 			if (trace <= 0.00001f) {
 				return result;
 			}
 
 			float traceInv = 1.0f / trace;
-			result.x = (((worldPt.y * worldToCam[0][1]) + (worldPt.x * worldToCam[0][0])) + ((worldPt.z * worldToCam[0][2]) + worldToCam[0][3])) * traceInv;
-			result.y = (((worldPt.y * worldToCam[1][1]) + (worldPt.x * worldToCam[1][0])) + ((worldPt.z * worldToCam[1][2]) + worldToCam[1][3])) * traceInv;
+			result.x = (((a_worldPt.y * worldToCam[0][1]) + (a_worldPt.x * worldToCam[0][0])) + ((a_worldPt.z * worldToCam[0][2]) + worldToCam[0][3])) * traceInv;
+			result.y = (((a_worldPt.y * worldToCam[1][1]) + (a_worldPt.x * worldToCam[1][0])) + ((a_worldPt.z * worldToCam[1][2]) + worldToCam[1][3])) * traceInv;
 			return result;
 		}
 
 		//Same as WorldToScreen, but normalizes X and Y to the 0 to 1 range,
 		//and flips the Y component so that 0 is top left and 1 is bottom right.
-		NiPoint3 WorldToScreenNormalized(const NiPoint3& worldPt)
+		NiPoint3 WorldToScreenNormalized(const NiPoint3& a_worldPt)
 		{
-			auto result = WorldToScreen(worldPt);
+			auto result = WorldToScreen(a_worldPt);
 			result.x = (result.x + 1.0f) * 0.5f;
 			result.y = -result.y;
 			result.y = (result.y + 1.0f) * 0.5f;

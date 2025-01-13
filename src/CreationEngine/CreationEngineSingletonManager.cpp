@@ -20,8 +20,8 @@ RE::PlayerCamera* CreationEngineSingletonManager::GetPlayerCameraSingleton()
     return *singleton;
 }
 
-RE::TESObjectREFR* CreationEngineSingletonManager::GetPlayerRef()
+RE::PlayerCharacter* CreationEngineSingletonManager::GetPlayerRef()
 {
-    static REL::Relocation<RE::TESObjectREFR**> singleton{ GameStore::MemoryOffsets::GlobalPlayerRef()};
+    static REL::Relocation<RE::PlayerCharacter**> singleton{ GameStore::MemoryOffsets::GlobalPlayerRef()};
     return *singleton;
 }
