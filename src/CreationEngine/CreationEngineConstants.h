@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Constants
+namespace ModConstants
 {
     inline float minimumCameraRotationAngle =  0.0000099999997f;
     inline float minimumCameraRotationAngle2 = 0.00000011920929f; //epsilon float
@@ -17,7 +17,6 @@ namespace Constants
     inline bool preventCameraRoll{false};
     inline bool cameraShake{false};
 
-    inline bool enableAFRCameraMotionFix{true};
     static constexpr int NUM_STAGES = 12;
     inline std::array<bool, NUM_STAGES> enabledResourcesToCopy{false, true, true, true, false, false, false, false, false, false, false, false};
     inline std::array<int, NUM_STAGES> rgResourceCount{2,2,2,2,2,2,2,1,2,2,2,2};

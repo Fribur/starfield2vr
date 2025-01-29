@@ -1,0 +1,94 @@
+#include "GameFlow.h"
+#include "ModSettingsStore.h"
+#include "RE/P/PlayerCamera.h"
+#include <CreationEngine/CreationEngineSingletonManager.h>
+#include <mods/VR.hpp>
+
+namespace GameFlow
+{
+    State gState{};
+    auto vr = VR::get();
+
+    void resetGameState() {
+        gStore.debugData.ui_parts.clear();
+        gState.uiData.modulino++;
+        gState.uiData.rendered_menus_count[gState.uiData.modulino % 2] = 0;
+    }
+
+    void renderMenu(std::string_view menuNameHash) {
+        switch (djb2Hash(menuNameHash.data())) {
+        case "Interface/HUDMenu.gfx"_DJB:
+        case "Interface/SpaceshipHudMenu.swf"_DJB:
+            //            case "Interface/HUDMessagesMenu.gfx"_DJB:
+        case "Interface/ScopeMenu.swf"_DJB:
+        case "Interface/FavoritesMenu.swf"_DJB:
+        case "Interface/MonocleMenu.swf"_DJB:
+        case "Interface/DialogueMenu.swf"_DJB:
+            gState.uiData.rendered_menus_count[gState.uiData.modulino % 2]--;
+            break;
+        case "Interface/WorkshopMenu.swf"_DJB:
+        case "Interface/ResearchMenu.swf"_DJB:
+        case "Interface/WeaponCraftingMenu.swf"_DJB:
+        case "Interface/WeaponsCraftingMenu.swf"_DJB:
+        case "Interface/ArmorCraftingMenu.swf"_DJB:
+        case "Interface/IndustrialCraftingMenu.swf"_DJB:
+        case "Interface/DrugsCraftingMenu.swf"_DJB:
+        case "Interface/SpaceShipEditorMenu.swf"_DJB:
+        case "Interface/ShipCrewMenu.swf"_DJB:
+        case "Interface/SkillsMenu.swf"_DJB:
+        case "Interface/MainMenu.swf"_DJB:
+        case "Interface/CursorMenu.swf"_DJB:
+        case "Interface/DataMenu.swf"_DJB:
+        case "Interface/InventoryMenu.swf"_DJB:
+        case "Interface/LoadingMenu.swf"_DJB:
+        case "Interface/PauseMenu.swf"_DJB:
+        case "Interface/GalaxyStarMapMenu.swf"_DJB:
+        case "Interface/StarMapMenu.swf"_DJB:
+            gState.uiData.rendered_menus_count[gState.uiData.modulino % 2]++;
+            break;
+        default:
+            break;
+
+        }
+        gStore.debugData.ui_parts.push_back(menuNameHash);
+    }
+
+    bool shouldShowFlatScreen() {
+        if(vr->get_runtime()->loaded && vr->get_runtime()->is_openvr()) {
+            // quad display is not implemented in openvr
+            return false;
+        }
+        if(gStore.internalSettings.enforceFlatScreen) {
+            return true;
+        }
+
+        return gState.uiData.rendered_menus_count[(gState.uiData.modulino + 1) % 2] >= 0;
+    }
+
+    bool isAimingDownSights() {
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+        return p_player && p_player->IsInIronSights();
+    }
+    bool isWeaponDrawn() {
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+        return p_player && p_player->IsWeaponDrawn();
+    }
+    bool isImmovable() {
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+        if(!p_player) {
+            return true;
+        }
+        return p_player->Immovable();
+    }
+    bool isControlledByAI() {
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+        if(!p_player) {
+            return false;
+        }
+        return p_player->ControlledByAI();
+    }
+    bool isInFirstPerson() {
+        auto p_camera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
+        return p_camera && p_camera->IsInFirstPerson();
+    }
+}

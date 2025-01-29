@@ -5,9 +5,11 @@
 //#include <imgui_internal.h>
 #include <CreationEngine/CreationEngineCameraManager.h>
 #include <CreationEngine/CreationEngineInputManager.h>
+#include <CreationEngine/models/ModSettingsStore.h>
 #include <Xinput.h>
 #include <glm/gtx/transform.hpp>
-//#include <hooks/CreationEngineHook.h>
+#include <utility/ScopeGuard.hpp>
+// #include <hooks/CreationEngineHook.h>
 
 #include "shared/sdk/Math.hpp"
 //#include "sdk/SceneManager.hpp"
@@ -2140,7 +2142,7 @@ void VR::on_pre_imgui_frame() {
 }*/
 
 VRRuntime::Eye VR::get_current_render_eye() const {
-    if (m_frame_count % 2 != m_left_eye_interval) {
+    if (m_frame_count % 2 == m_left_eye_interval) {
         return VRRuntime::Eye::LEFT;
     }
 
@@ -2149,14 +2151,35 @@ VRRuntime::Eye VR::get_current_render_eye() const {
 
 void VR::on_present() {
 //    m_render_frame_count = m_frame_count;
-    if ((m_render_frame_count + 1) % 2 == m_left_eye_interval) {
-        ResetEvent(m_present_finished_event);
-    }
-
+//    spdlog::info("[{:X}]on_present fc={} renderer fc={}", GetCurrentThreadId(), GameFlow::gameLoopFrameCount(), GameFlow::renderLoopFrameCount());
     auto runtime = get_runtime();
 
     if (!get_runtime()->loaded) {
         return;
+    }
+
+//    static int skipped_frames = 0;
+
+    if(m_skip_frames > 0 && (m_render_frame_count + 1) % 2 == m_left_eye_interval) {
+        m_skip_frames--;
+//        skipped_frames++;
+        spdlog::info("Skipping frame to keep up with game");
+        return;
+    }
+//    skipped_frames = 0;
+
+    utility::ScopeGuard _guard {[&]() {
+        if (!is_using_afr() || (m_render_frame_count + 1) % 2 == m_left_eye_interval) {
+            SetEvent(m_present_finished_event);
+        }
+
+        m_last_frame_count = m_render_frame_count;
+    }};
+    m_render_frame_count++;
+
+
+    if ((m_render_frame_count + 1) % 2 == m_left_eye_interval) {
+        ResetEvent(m_present_finished_event);
     }
 
     auto openvr = get_runtime<runtimes::OpenVR>();
@@ -2212,7 +2235,7 @@ void VR::on_present() {
         openvr->needs_pose_update = true;
     }
 
-    m_last_frame_count = m_render_frame_count;
+//    m_last_frame_count = m_render_frame_count;
 
     if (m_submitted || runtime->needs_pose_update) {
         if (m_submitted) {
@@ -2228,9 +2251,9 @@ void VR::on_present() {
         m_submitted = false;
     }
 
-    if ((m_render_frame_count + 1) % 2 == m_left_eye_interval) {
-        SetEvent(m_present_finished_event);
-    }
+//    if ((m_render_frame_count + 1) % 2 == m_left_eye_interval) {
+//        SetEvent(m_present_finished_event);
+//    }
 }
 
 void VR::on_post_present() {
@@ -2845,6 +2868,9 @@ void VR::on_pre_begin_rendering(void* entry) {
     }
     m_in_render = true;
 
+    m_frame_count++;
+    on_wait_rendering(entry);
+
     // Use the gamepad/motion controller sticks to lerp the standing origin back to the center
 /*    if (m_via_hid_gamepad.update()) {
         auto pad = sdk::call_native_func_easy<REManagedObject*>(m_via_hid_gamepad.object, m_via_hid_gamepad.t, "get_LastInputDevice");
@@ -2888,7 +2914,7 @@ void VR::on_pre_begin_rendering(void* entry) {
     detect_controllers();
 
     //actual_frame_count = get_game_frame_count();
-//    m_frame_count++;
+
     actual_frame_count = m_frame_count;
 
     /*if (!inside_on_end) {
@@ -2905,7 +2931,7 @@ void VR::on_pre_begin_rendering(void* entry) {
             spdlog::warn("VR: on_pre_wait_rendering: timed out");
         }
 
-        return;
+//        return;
     }
 
     if (runtime->needs_pose_update && inside_on_end) {
@@ -2959,7 +2985,7 @@ void VR::on_end_rendering(void* entry) {
     // by the time the next frame (right eye) starts,
     // the frame count might get modified, screwing up our logic
     // so we need a render frame count to compare against
-    m_render_frame_count = m_frame_count;
+//    m_render_frame_count = m_frame_count;
 
     auto runtime = get_runtime();
 
@@ -3107,7 +3133,7 @@ void VR::on_wait_rendering(void* entry) {
     // to be signaled
     // only on the left eye interval because we need the right eye
     // to start render work as soon as possible
-    if (((m_frame_count + 1) % 2) == m_left_eye_interval) {
+    if (((m_frame_count) % 2) == m_left_eye_interval) {
         if (WaitForSingleObject(m_present_finished_event, 333) == WAIT_TIMEOUT) {
             timed_out = true;
         }
@@ -4107,7 +4133,7 @@ Matrix4x4f VR::get_rotation(uint32_t index) const {
         // HMD rotation
         if (index == 0 && !m_openxr->stage_views.empty()) {
             auto mat = Matrix4x4f{runtimes::OpenXR::to_glm(m_openxr->view_space_location.pose.orientation)};
-            mat[3] = Vector4f{*(Vector3f*)&m_openxr->view_space_location.pose.position, 1.0f};
+//            mat[3] = Vector4f{*(Vector3f*)&m_openxr->view_space_location.pose.position, 1.0f};
 
             return mat;
             return Matrix4x4f{*(glm::quat*)&m_openxr->stage_views[0].pose.orientation};
@@ -4141,7 +4167,7 @@ Matrix4x4f VR::get_transform(uint32_t index) const {
 
         // HMD rotation
         if (index == 0 && !m_openxr->stage_views.empty()) {
-            auto mat = Matrix4x4f{*(glm::quat*)&m_openxr->view_space_location.pose.orientation};
+            auto mat = Matrix4x4f{runtimes::OpenXR::to_glm(m_openxr->view_space_location.pose.orientation)};
             mat[3] = Vector4f{*(Vector3f*)&m_openxr->view_space_location.pose.position, 1.0f};
             return mat;
         } else if (index > 0) {

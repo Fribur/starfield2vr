@@ -464,6 +464,7 @@ private:
 
     Vector4f m_raw_projections[2]{};
 
+
     vrmod::D3D12Component m_d3d12{};
 //    vrmod::OverlayComponent m_overlay_component{};
 
@@ -481,9 +482,10 @@ private:
 
     // options
 public:
-    int m_frame_count{};
-private:
+    int m_frame_count{-1};
     int m_render_frame_count{};
+    int m_skip_frames{0};
+private:
     int m_last_frame_count{-1};
     int m_left_eye_frame_count{0};
     int m_right_eye_frame_count{0};

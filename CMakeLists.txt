@@ -28,14 +28,17 @@ include("cmake/spdlog.cmake")
 include("cmake/minhook.cmake")
 include("cmake/glm.cmake")
 include("cmake/vigemclient.cmake")
-#include("cmake/safetyhook.cmake")
-#include("cmake/polyhook.cmake")
+include("cmake/safetyhook.cmake")
 include("cmake/kananlib.cmake")
 include("cmake/directxtk.cmake")
 include("cmake/openxr.cmake")
 #include("cmake/streamline.cmake")
 #include("cmake/imgui.cmake")
 
+if(POLYHOOK2_FUNCTION_HOOK)
+  include("cmake/polyhook.cmake")
+  add_compile_definitions(POLYHOOK2_FUNCTION_HOOK)
+endif()
 # Check if we should use the full SDK or the lite version
 if(NOT USE_STARFIELD_SDK_LITE)
   add_subdirectory(extern/CommonLibSF)
@@ -115,7 +118,7 @@ target_link_libraries("${PROJECT_NAME}" PUBLIC
         bddisasm
         shlwapi
         minhook
-#        PolyHook_2
+        safetyhook
         ViGEmClient
         kananlib
         openxr_loader
@@ -123,6 +126,12 @@ target_link_libraries("${PROJECT_NAME}" PUBLIC
         DirectXTK12
         "${CMAKE_CURRENT_SOURCE_DIR}/extern/openvr/lib/win64/openvr_api.lib"
 )
+
+if(POLYHOOK2_FUNCTION_HOOK)
+    target_link_libraries("${PROJECT_NAME}" PUBLIC
+            PolyHook_2
+    )
+endif()
 
 target_include_directories(
   ${PROJECT_NAME}

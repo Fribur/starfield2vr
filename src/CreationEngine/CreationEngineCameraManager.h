@@ -85,7 +85,8 @@ public:
         return instance;
     }
 
-    void onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
+    void                          UpdateWorldCamera();
+//    void onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
     void onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
 
     CreationEngineCameraManager(const CreationEngineCameraManager&)            = delete;
@@ -113,8 +114,8 @@ private:
     std::unique_ptr<FunctionHook> m_onUpdateCollisionMatrixHook{};
     std::unique_ptr<FunctionHook> m_onSetViewportHook{};
     std::unique_ptr<FunctionHook> m_onSetCameraScissorHook{};
-    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
-    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
+//    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
+//    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
     void                          onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
     void                          onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
     unsigned int*                 m_globalFrameCount{};

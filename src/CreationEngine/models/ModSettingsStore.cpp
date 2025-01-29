@@ -1,5 +1,6 @@
 #include "ModSettingsStore.h"
 
-namespace ModSettingsStore {
+namespace GameFlow
+{
     Settings gStore;
 }

@@ -153,6 +153,16 @@ namespace Steam::MemoryOffsets
         }
     } // namespace CreationRenderer
 
+    namespace Nvidia {
+
+        inline uintptr_t onSetReflexMarkerInternal()
+        {
+            // ID 1391721
+            auto val = (uintptr_t)mod + OffsetsTable::GetOffset(1391721);
+            return val;
+        }
+    }
+
     namespace PlayerCamera
     {
         inline uintptr_t Singleton()
@@ -405,6 +415,18 @@ namespace Xbox::MemoryOffsets
             return val;
         }
     } // namespace CreationRenderer
+
+
+    namespace Nvidia {
+
+        inline uintptr_t onSetReflexMarkerInternal()
+        {
+            // ID 1391721
+            auto val = (uintptr_t)mod + OffsetsTable::GetOffset(1391721);
+            return val;
+        }
+    }
+
 
     namespace PlayerCamera
     {

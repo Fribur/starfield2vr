@@ -1,19 +1,10 @@
-//
-// Created by sergp on 8/18/2024.
-//
-
 #include "UpscalerAfrNvidiaModule.h"
+#include "REL/Relocation.h"
 #include "sl_matrix_helpers.h"
 #include <CreationEngine/memory/offsets.h>
+#include <CreationEngine/models/ModSettingsStore.h>
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
-#include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
-#include "REL/Relocation.h"
-
-
-//DlssConstants g_dlss_constants{};
-//DlssSettings  g_dlss_settings{};
-//DlssDebugInfo g_dlss_debug_info{};
 
 void UpscalerAfrNvidiaModule::InstallHooks()
 {
@@ -70,34 +61,11 @@ void UpscalerAfrNvidiaModule::InstallHooks()
     spdlog::info("sl.interposer Hooks installed");
 }
 
-/*sl::Result UpscalerAfrNvidiaModule::on_slGetNewFrameToken(sl::FrameToken*& token, const uint32_t* frameIndex)
-{
-    auto instance = UpscalerAfrNvidiaModule::Get();
-
-    auto original_fn = instance->m_get_new_frame_token_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slGetNewFrameToken)>();
-    auto vr          = VR::get();
-    //    spdlog::info("slGetNewFrameToken called {} frame {}", vr->get_current_render_eye() == VRRuntime::Eye::RIGHT,*frameIndex);
-    //
-    //    if(vr->is_hmd_active()  && !vr->m_left_trigger_down && vr->get_current_render_eye() == VRRuntime::Eye::RIGHT && instance->m_afr_frame_token != nullptr) {
-    //        token = instance->m_afr_frame_token;
-    //        return sl::Result::eOk;
-    //
-    //    }
-    //    if(instance->first_frame == 0) {
-    //        instance->first_frame = *frameIndex;
-    //    }
-    auto half_frame = *frameIndex / 2;
-    auto result     = original_fn(token, frameIndex);
-    //    original_fn(instance->m_afr_frame_token, &half_frame);
-    return result;
-}*/
-
 sl::Result UpscalerAfrNvidiaModule::on_slSetTag(sl::ViewportHandle& viewport, const sl::ResourceTag* tags, uint32_t numTags, sl::CommandBuffer* cmdBuffer)
 {
     static auto            instance    = UpscalerAfrNvidiaModule::Get();
     static auto            original_fn = instance->m_set_tag_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetTag)>();
-    static auto            vr          = VR::get();
-    if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT) {
+    if(GameFlow::renderLoopFrameCount() % 2 == 0) {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         return original_fn(afr_viewport_handle, tags, numTags, cmdBuffer);
     }
@@ -113,12 +81,7 @@ sl::Result UpscalerAfrNvidiaModule::on_slEvaluateFeature(sl::Feature feature, co
     if (numInputs != 1) {
         spdlog::error("numInputs != 1");
     }
-//    auto get_frame_token_fn = instance->m_get_new_frame_token_hook->get_original<decltype(DlssDualView::on_slGetNewFrameToken)>();
-//    uint32_t currentFrame = frame;
-//    auto half_frame = currentFrame / 2;
-//    sl::FrameToken* new_token;
-//    get_frame_token_fn(new_token, &half_frame);
-    if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT && feature == sl::kFeatureDLSS) {
+    if(frame % 2 == 0  && feature == sl::kFeatureDLSS) {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         sl::BaseStructure* afr_inputs[] = {&afr_viewport_handle};
         return original_fn(feature, frame, afr_inputs, 1, cmdBuffer);
@@ -145,42 +108,14 @@ sl::Result UpscalerAfrNvidiaModule::on_slSetConstants(sl::Constants& values, con
             spdlog::error("DLSS not yet initialized");
         }
     }
-//    spdlog::info("slSetConstants called cmaeraMotionincl={} mvecscale={}x{}", (UINT)values.cameraMotionIncluded, values.mvecScale.x, values.mvecScale.y);
     static auto original_fn = instance->m_set_constants_hook->get_original<decltype(UpscalerAfrNvidiaModule::on_slSetConstants)>();
-    static auto vr          = VR::get();
-//    auto get_frame_token_fn = instance->m_get_new_frame_token_hook->get_original<decltype(DlssDualView::on_slGetNewFrameToken)>();
-//    uint32_t currentFrame = frame;
-//    auto half_frame = currentFrame / 2;
-//    sl::FrameToken* new_token;
-//    get_frame_token_fn(new_token, &half_frame);
-    if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT) {
+    if(frame % 2 == 0) {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
         return original_fn(values, frame, afr_viewport_handle);
     }
     auto result = original_fn(values, frame, viewport);
     return result;
 }
-//
-//uint64_t UpscalerAfrNvidiaModule::on_ceGetNewFrameToken(uintptr_t a1, uint32_t frameIndex)
-//{
-//    auto instance    = UpscalerAfrNvidiaModule::Get();
-//    auto original_fn = instance->m_onGetDllsFrameToken->get_original<decltype(UpscalerAfrNvidiaModule::on_ceGetNewFrameToken)>();
-//
-//    auto result = original_fn(a1, frameIndex);
-//    return result;
-//}
-
-//
-// sl::FrameToken* DlssDualView::get_half_frame_internal(const sl::FrameToken& token)
-//{
-//    auto instance = DlssDualView::Get();
-//    uint32_t frameIndex = token;
-//    auto half_frame = frameIndex/2;
-//    auto original_fn = instance->m_get_new_frame_token_hook->get_original<decltype(DlssDualView::on_slGetNewFrameToken)>();
-//    sl::FrameToken* new_token = nullptr;
-//    original_fn(new_token, &half_frame);
-//    return new_token;
-//}
 
 sl::Result UpscalerAfrNvidiaModule::on_dlssSetOptions(const sl::ViewportHandle& viewport, const sl::DLSSOptions& options)
 {
@@ -189,9 +124,9 @@ sl::Result UpscalerAfrNvidiaModule::on_dlssSetOptions(const sl::ViewportHandle& 
     uint32_t viewport_id      = viewport;
     instance->afr_viewport_id = viewport_id + 1;
     static auto vr                   = VR::get();
-    if(vr->get_current_render_eye() == VRRuntime::Eye::RIGHT) {
+    {
         sl::ViewportHandle afr_viewport_handle{instance->afr_viewport_id};
-        return original_fn(afr_viewport_handle, options);
+        original_fn(afr_viewport_handle, options);
     }
     return original_fn(viewport, options);
 }

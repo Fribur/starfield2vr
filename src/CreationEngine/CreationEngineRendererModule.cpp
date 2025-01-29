@@ -3,14 +3,17 @@
 //
 
 #include "CreationEngineRendererModule.h"
+#include "CreationEngineCameraManager.h"
 #include "CreationEngineConstants.h"
 #include "CreationEngineSingletonManager.h"
 #include "REL/Relocation.h"
 #include "UpscalerAfrNvidiaModule.h"
 #include <CreationEngine/memory/offsets.h>
+#include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
+#include <safetyhook/easy.hpp>
 
 uintptr_t onUpdateConstantBufferViewDetour(uint8_t copyPresentToPast, uint8_t orphoProjection, uintptr_t pCameraTransforms, uintptr_t vararg1Parent, uintptr_t vararg3Parent,
                                            double unk, char unk2, RE::RenderPassConstantBufferView* camerablocks)
@@ -41,12 +44,23 @@ LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 void CreationEngineRendererModule::InstallHooks()
 {
+//    // 0x25dafe4 - this one works but sometimes give 2 ticks
+//    REL::Relocation<uintptr_t> onWorldTickFn{ (uintptr_t )mod + 0x25e267c };
+//    m_worldTick_hook = safetyhook::create_inline((void*)onWorldTickFn.address(), (void*)worldTick);
+////        std::make_unique<FunctionHook>(onWorldTickFn.address(), reinterpret_cast<uint64_t>(&worldTick));
+//    if(!m_worldTick_hook) {
+//        spdlog::error("Failed to create hook for onWorldTick");
+//    }
+
+    REL::Relocation<uintptr_t> setReflexMarkerInternalFn{ GameStore::MemoryOffsets::Nvidia::onSetReflexMarkerInternal() };
+    m_setReflexMarkerInternalHook = safetyhook::create_inline((void*)setReflexMarkerInternalFn.address(), (void*)setReflexMarkerInternal);
+    if(!m_setReflexMarkerInternalHook) {
+        spdlog::error("Failed to create hook for setReflexMarkerInternal");
+    }
+
     //    REL::Relocation<RE::CreationEngineSettings**> settings{ REL::ID(878340) };
     REL::Relocation<RE::CreationEngineSettings**> settings{ GameStore::MemoryOffsets::GlobalRenderSettings() };
     m_creationEngineSettings = settings.get();
-
-    REL::Relocation<int*> globalFrameCountAddr{ GameStore::MemoryOffsets::CreationRenderer::GlobalFrameCount() };
-    m_globalFrameCount = globalFrameCountAddr.get();
 
     REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{ GameStore::MemoryOffsets::CreationRenderer::OnUpdateConstantBufferView() };
     m_onUpdateConstantBufferViewHook = std::make_unique<FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uint64_t>(&onUpdateConstantBufferViewDetour));
@@ -137,7 +151,6 @@ void CreationEngineRendererModule::SwapBuffer(ID3D12GraphicsCommandList* cmdList
 
 void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, bool before)
 {
-    //    RE::StorageTable::RenderGraphHandle::ResetUpscalerHistory(pGraph->renderGraphID);
     if (m_startFramePass == nullptr && strcmp(pGraph->name, "CRBeginFrame") == 0) {
         m_startFramePass = pGraph;
     }
@@ -148,15 +161,8 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
         m_framePass = pGraph;
     }
     auto vr = VR::get();
-    if (m_startFramePass == pGraph) {
-        if (before) {
-            ModSettingsStore::resetGameState();
-
-            vr->on_pre_begin_rendering(nullptr);
-        }
-        else {
-            vr->on_begin_rendering(nullptr);
-        }
+    if (m_startFramePass == pGraph && before) {
+        GameFlow::resetGameState();
     }
     else if (m_endFramePass == pGraph) {
         if (before) {
@@ -167,10 +173,10 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
         }
     }
     else if (!before && m_framePass == pGraph) {
-        auto fc          = m_globalFrameCount == nullptr ? 0 : *m_globalFrameCount;
+        auto fc          = GameFlow::renderLoopFrameCount();
         auto context     = reinterpret_cast<RE::RenderGraphDataD3D12Context*>(pRenderGraphData->getCommandList());
         auto commandList = context->pID3D12CommandList;
-        if (vr->is_hmd_active() && Constants::enabledResourcesToCopy[1]) {
+        if (vr->is_hmd_active() && GameFlow::gStore.internalSettings.nvidiaAndTAAfix && ModConstants::enabledResourcesToCopy[1]) {
             auto resource = pRenderGraphData->getResourceByIndex(1, (fc - 1) & 1);
             SwapBuffer(commandList, resource, 1, (fc - 1) & 1, fc & 1);
         }
@@ -181,16 +187,7 @@ __int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i,
 {
     using func_t              = decltype(onRenderFrameStartDetour);
     static auto original_func = m_onRenderFrameStartHook->get_original<func_t>();
-    auto        vr            = VR::get();
-    if (vr->get_runtime()->ready() || Constants::cameraShake) {
-        vr->m_frame_count++;
-    }
-
-    g_framework->run_imgui_frame(false);
-//    vr->on_pre_begin_rendering(nullptr);
-//    vr->on_begin_rendering(nullptr);
-
-    //    spdlog::info("Frame count increase {}", vr->m_frame_count);
+//    spdlog::info("Frame Submit Start[{:X}], fc=[m={},r={}]", GetCurrentThreadId(), GameFlow::gameLoopFrameCount(), GameFlow::renderLoopFrameCount());
     auto result = original_func(pVoid, i, i1, i2);
     return result;
 }
@@ -198,13 +195,13 @@ __int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i,
 void CreationEngineRendererModule::SetWindowSize(int width, int height)
 {
     static std::atomic<bool> inside_change{ false };
-    static int               last_synced_frame{ 3000 };
-    auto                     fc = CreationEngineRendererModule::GetGlobalFrameCount();
+    static int               last_synced_frame{ 1000 };
+    auto                     fc = GameFlow::renderLoopFrameCount();
     if(inside_change.exchange(true)) {
         return;
     }
 
-    if (*m_creationEngineSettings == nullptr || (fc - last_synced_frame) < 5*72) {
+    if (m_creationEngineSettings == nullptr || *m_creationEngineSettings == nullptr || (fc - last_synced_frame) < 5*72) {
         inside_change.store(false);
         return;
     }
@@ -218,6 +215,9 @@ void CreationEngineRendererModule::SetWindowSize(int width, int height)
         }
         width   = vr->get_hmd_width();
         height  = vr->get_hmd_height();
+        if(width == 0 || height == 0) {
+            return;
+        }
     }
 
     auto window       = (*m_creationEngineSettings)->pHwindow;
@@ -253,7 +253,7 @@ uintptr_t CreationEngineRendererModule::onUpdateConstantBufferView(uint8_t copyC
     auto        result        = original_func(copyCurrentToPast, resetHistory, i2, i3, i4, d, i5, pView);
     //    spdlog::info("update camera blocks {} index {} handles[{},{},{}] st ptr {}", fmt::ptr(pView), indexAfterPresent, cameraHandleId, cameraHandleId2, cameraHandleId3,
     //    fmt::ptr(cameraBlocks->data));
-    if (copyCurrentToPast && vr->is_hmd_active() && Constants::enableAFRCameraMotionFix) {
+    if (copyCurrentToPast && vr->is_hmd_active() && GameFlow::gStore.internalSettings.nvidiaAndTAAfix) {
         auto key = reinterpret_cast<uintptr_t>(pView) & 0xFFFFFFFFFFFFFFC0;
         if (pastProjections.find(key) != pastProjections.end()) {
             auto temp                         = pastProjections[key];
@@ -284,18 +284,76 @@ uintptr_t CreationEngineRendererModule::onTaaPass(RE::CreationRendererPrivate::R
     static auto instance    = Get();
     static auto original_fn = instance->taa_vfunc7_hook->get_original<decltype(CreationEngineRendererModule::onTaaPass)>();
     auto        result      = original_fn(pPass, pRenderGraphData, renderPassData);
-    auto        fc          = CreationEngineRendererModule::GetGlobalFrameCount();
+    if(!GameFlow::gStore.internalSettings.nvidiaAndTAAfix) {
+        return result;
+    }
+    auto        fc          = GameFlow::renderLoopFrameCount();
     auto        context     = reinterpret_cast<RE::RenderGraphDataD3D12Context*>(pRenderGraphData->getCommandList());
     auto        commandList = context->pID3D12CommandList;
     static auto vr          = VR::get();
 
-    if (vr->is_hmd_active() && Constants::enabledResourcesToCopy[2]) {
+    if (vr->is_hmd_active() && ModConstants::enabledResourcesToCopy[2]) {
         auto resource = pRenderGraphData->getResourceByIndex(2, (fc - 1) & 1);
         instance->SwapBuffer(commandList, resource, 2, (fc - 1) & 1, fc & 1);
     }
-    if (vr->is_hmd_active() && Constants::enabledResourcesToCopy[3]) {
+    if (vr->is_hmd_active() && ModConstants::enabledResourcesToCopy[3]) {
         auto resource = pRenderGraphData->getResourceByIndex(3, (fc - 1) & 1);
         instance->SwapBuffer(commandList, resource, 3, (fc - 1) & 1, fc & 1);
     }
     return result;
+}
+
+/*
+
+void logWithExtraData(std::string_view message) {
+    spdlog::info("[{:X}:{}] frameCount[m={},r={}]", GetCurrentThreadId(), message.data(), GameFlow::gameLoopFrameCount(), GameFlow::renderLoopFrameCount());
+}
+*/
+
+
+uintptr_t CreationEngineRendererModule::setReflexMarkerInternal(uintptr_t rcx, uint32_t marker, uint32_t oldFrameIndex)
+{
+//    logWithExtraData(std::format("setReflexMarkerInternal[{}, f={}]", marker, oldFrameIndex));
+    static auto instance = Get();
+    static bool engine_notified = false;
+    static     auto        vr            = VR::get();
+    static auto cameraModule = CreationEngineCameraManager::Get();
+    static bool            sync_marker_started = false;
+    static int frames_since_reset = 0;
+    if ((marker == 6 || marker == 0 || marker == 1) && !engine_notified) {
+        engine_notified = true;
+        instance->SetWindowSize(0,0);
+        g_framework->run_imgui_frame(false);
+        vr->on_pre_begin_rendering(nullptr);
+        vr->on_begin_rendering(nullptr);
+        if(vr->get_runtime()->loaded) {
+            frames_since_reset++;
+            if(vr->m_frame_count % 2 == 0) {
+                sync_marker_started = true;
+            } else {
+                sync_marker_started = false;
+            }
+        }
+        cameraModule->UpdateWorldCamera();
+    }
+    // Reset notification if marker is 1
+    if (marker == 1) {
+        engine_notified = false;
+    }
+
+
+    if(vr->get_runtime()->loaded && marker == 1 && sync_marker_started) {
+        /*
+         * as we sync on game loop L eye + frame + game loop R eye + frame Enc
+         * we don't expect any async frames comes into this loop
+         * if we detect async frame we reset sync and let engine to handle it
+         */
+        sync_marker_started = false;
+    } else if(frames_since_reset > 100 && marker > 1 && marker < 5 && sync_marker_started && vr->get_runtime()->loaded) {
+        spdlog::info("Detected frame inconsistency, resetting frame sync m={}", marker);
+        vr->m_skip_frames = 1;
+        frames_since_reset = 0;
+        sync_marker_started = false;
+    }
+    return instance->m_setReflexMarkerInternalHook.call<uintptr_t>(rcx, marker, oldFrameIndex);
 }

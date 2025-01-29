@@ -1,12 +1,15 @@
 #include "CreationEngineEntry.h"
 #include "CreationEngineConstants.h"
+#include "CreationEngineGameLoop.h"
 #include "CreationEngineSingletonManager.h"
 #include "HavokModule.h"
+#include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
 #include <mods/VR.hpp>
 
 std::optional<std::string> CreationEngineEntry::on_initialize()
 {
+//    CreationEngineGameLoop::Get();
     CreationEngineCameraManager::Get()->InstallHooks();
     CreationEngineRendererModule::Get()->InstallHooks();
     UpscalerAfrNvidiaModule::Get();
@@ -21,23 +24,22 @@ void CreationEngineEntry::on_draw_ui()
     }
     auto vr = VR::get();
     ImGui::Text("IPD: %f", vr->get_runtime()->get_ipd());
-    ImGui::Text("DominantEye Reflect %d", Constants::dominantEye);
+    ImGui::Text("DominantEye Reflect %d", ModConstants::dominantEye);
     if(m_dominant_eye->draw("Dominant Eye"))
     {
-        Constants::dominantEye = m_dominant_eye->value();
+        ModConstants::dominantEye = m_dominant_eye->value();
     }
     if(m_head_tracking_type->draw("Head Tracking Type"))
     {
-        Constants::headTrackingType = m_head_tracking_type->value();
+        ModConstants::headTrackingType = m_head_tracking_type->value();
     }
     if(m_head_tracking_multiplier->draw("Head Tracking Sensitivity"))
     {
-        Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();
+        ModConstants::headTrackingMultiplier = m_head_tracking_multiplier->value();
     }
 
     {
-        ImGui::Text("Frames Since Camera update %d", ModSettingsStore::gStore.g_statefullData.renderData.rendered_menus_count[ModSettingsStore::gStore.g_statefullData.renderData.modulino % 2]);
-        for(auto& ui_part : ModSettingsStore::gStore.debugData.ui_parts)
+        for(auto& ui_part : GameFlow::gStore.debugData.ui_parts)
         {
             ImGui::Text("UI: %s", ui_part.data());
         }
@@ -113,9 +115,9 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     for (IModValue& option : m_options) {
         option.config_load(cfg);
     }
-    Constants::dominantEye = m_dominant_eye->value();
-    Constants::headTrackingMultiplier = m_head_tracking_multiplier->value();
-    Constants::headTrackingType = m_head_tracking_type->value();
+    ModConstants::dominantEye = m_dominant_eye->value();
+    ModConstants::headTrackingMultiplier = m_head_tracking_multiplier->value();
+    ModConstants::headTrackingType = m_head_tracking_type->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)

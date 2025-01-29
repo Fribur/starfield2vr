@@ -20,6 +20,21 @@ using Matrix3x4f = glm::mat3x4;
 using Matrix4x4f = glm::mat4x4;
 
 
+static auto mat_cast_to_havok_coord(const glm::quat& rot) {
+    return glm::quat{ rot.w, -rot.x, rot.z, -rot.y };
+}
+
+static auto mat_cast_to_havok_coord(const glm::mat4& mat) {
+    auto qua    = glm::normalize(glm::quat_cast(mat));
+    qua = mat_cast_to_havok_coord(qua);
+    glm::mat4 result = glm::mat4_cast(qua);
+    result[3][0] = mat[3][0];
+    result[3][1] = -mat[3][2];
+    result[3][2] = mat[3][1];
+    return result;
+}
+
+
 static glm::vec3 euler_angles_from_steamvr(const glm::mat4x4& rot) {
     float pitch = 0.0f;
     float yaw = 0.0f;

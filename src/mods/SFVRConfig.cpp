@@ -13,15 +13,15 @@ std::optional<std::string> SFVRConfig::on_initialize() {
 
 void renderMultiSelect() {
     ImGui::Text("Select Stages:");
-    for (int i = 0; i < Constants::NUM_STAGES; ++i) {
+    for (int i = 0; i < ModConstants::NUM_STAGES; ++i) {
         std::string id = "StaCopyResourceIdge " + std::to_string(i);
 
         ImGui::PushID(id.c_str());
-        if (ImGui::Checkbox(std::to_string(i).c_str(), &Constants::enabledResourcesToCopy[i])) {
+        if (ImGui::Checkbox(std::to_string(i).c_str(), &ModConstants::enabledResourcesToCopy[i])) {
             // Checkbox state changed
         }
         ImGui::PopID();
-        if (i < Constants::NUM_STAGES - 1) ImGui::SameLine();
+        if (i < ModConstants::NUM_STAGES - 1) ImGui::SameLine();
     }
 }
 

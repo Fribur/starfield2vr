@@ -2,6 +2,7 @@
 #include <RE/C/CreationRendererPrivate.h>
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
+#include <safetyhook/inline_hook.hpp>
 #include <shared/sdk/Math.hpp>
 #include <utils/FunctionHook.h>
 #include <windef.h>
@@ -145,13 +146,6 @@ public:
 
     [[nodiscard]] inline RE::CreationEngineSettings* GetCreationEngineSettings() const { return *m_creationEngineSettings; }
 
-    inline static int GetGlobalFrameCount()
-    {
-        static auto instance    = Get();
-        auto pFrameCount = instance->m_globalFrameCount;
-        return pFrameCount == nullptr ? 0 : *pFrameCount;
-    }
-
     void SwapBuffer(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* originalBuffer, int index, int sourceSlot, int destSlot);
 
     inline static void CopyResource(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* pSrcResource, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES srcState,
@@ -181,6 +175,9 @@ private:
     std::unique_ptr<FunctionHook> m_onRenderFrameStartHook{};
     std::unique_ptr<FunctionHook> m_onUpdateConstantBufferViewHook{};
     std::unique_ptr<FunctionHook> taa_vfunc7_hook{};
+    safetyhook::InlineHook m_worldTick_hook{};
+    safetyhook::InlineHook m_setReflexMarkerInternalHook{};
+
 
     RE::CreationRendererPrivate::RenderPass* m_startFramePass{ nullptr };
     RE::CreationRendererPrivate::RenderPass* m_endFramePass{ nullptr };
@@ -190,11 +187,10 @@ private:
     std::mutex                            m_last_resolution_mutex{};
     std::chrono::steady_clock::time_point m_last_resolution_sync{};
 
-    int* m_globalFrameCount{ nullptr };
-
     ComPtr<ID3D12Resource> m_pastBuffer[12][4];
 
     static uintptr_t onTaaPass(RE::CreationRendererPrivate::RenderPass* pPass, RE::CreationRendererPrivate::RenderGraphData* i, RE::CreationRendererPrivate::RenderPassData* i1);
     void             RenderGraphStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, bool before);
     static bool      ValidateResource(ID3D12Resource* source, ComPtr<ID3D12Resource> pPtr[4]);
+    static uintptr_t setReflexMarkerInternal(uintptr_t rcx, uint32_t marker, uint32_t oldFrameIndex);
 };

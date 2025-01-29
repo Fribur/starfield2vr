@@ -9,15 +9,19 @@
 #include "RE/P/PlayerCamera.h"
 #include "RE/S/ScaleformGFxMovie.h"
 #include <CreationEngine/memory/offsets.h>
+#include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
 #include <REL/Relocation.h>
 #include <cstdlib>
+#include <glm/gtx/vector_angle.hpp>
 #include <mods/VR.hpp>
+/*
 
 void onUpdateNiCameraDetour(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
     CreationEngineCameraManager::Get()->onUpdateNiCamera(a_camera, a_data);
 }
+*/
 
 void onSetNimFrustumDetour(RE::NiCamera* camera, RE::NiFrustum* frustum)
 {
@@ -33,11 +37,13 @@ void onScaleformSetViewPortDetour(uintptr_t* thisMovie, Scaleform::Gfx::Viewport
 {
     CreationEngineCameraManager::Get()->onScaleformSetViewPort(thisMovie, viewport);
 }
+/*
 
 void onScaleformMovieSetProjectionMatrix3DDetour(uintptr_t* thisMovie, Matrix4x4f& matrix)
 {
     CreationEngineCameraManager::Get()->onScaleformMovieSetProjectionMatrix3D(thisMovie, matrix);
 }
+*/
 
 bool isValidCamera(RE::NiCamera* pCamera)
 {
@@ -47,9 +53,10 @@ bool isValidCamera(RE::NiCamera* pCamera)
 
 void CreationEngineCameraManager::InstallHooks()
 {
-    REL::Relocation<uintptr_t> niCameraUpdateVFuncAddr{ GameStore::MemoryOffsets::NiCamera::UpdateWorldVfunc() };
-    m_onUpdateNiCameraHook = std::make_unique<FunctionHook>(niCameraUpdateVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onUpdateNiCameraDetour));
-    m_onUpdateNiCameraHook->create();
+//    REL::Relocation<uintptr_t> niCameraUpdateVFuncAddr{ GameStore::MemoryOffsets::NiCamera::UpdateWorldVfunc() };
+//    m_onUpdateNiCameraHook = std::make_unique<FunctionHook>(niCameraUpdateVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onUpdateNiCameraDetour));
+//    m_onUpdateNiCameraHook->create();
+
     REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc() };
     m_onSetNimFrustumHook = std::make_unique<FunctionHook>(setNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
     m_onSetNimFrustumHook->create();
@@ -61,24 +68,21 @@ void CreationEngineCameraManager::InstallHooks()
     REL::Relocation<uintptr_t> scaleformSetViewPortAddr{ GameStore::MemoryOffsets::Scaleform::Movie::SetViewportVFunc() };
     m_onScaleformSetViewPortHook = std::make_unique<FunctionHook>(scaleformSetViewPortAddr.address(), reinterpret_cast<uintptr_t>(&onScaleformSetViewPortDetour));
     m_onScaleformSetViewPortHook->create();
-
-    // TODO ID=885900 is real framecounter used in render graph
-    REL::Relocation<unsigned int*> globalFrameCountAddr{ GameStore::MemoryOffsets::GlobalFrameCounter() };
-    m_globalFrameCount = globalFrameCountAddr.get();
 }
-
+/*
 void CreationEngineCameraManager::onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
-    UpdateCamera(a_camera, a_data);
+//    UpdateCamera(a_camera, a_data);
     using func_t              = decltype(onUpdateNiCameraDetour);
     static auto original_func = m_onUpdateNiCameraHook->get_original<func_t>();
     original_func(a_camera, a_data);
-}
+}*/
 
 glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2, float animationTime = 1.0f) {
     // Calculate the relative rotation
     auto endRotation = glm::slerp(q1, q2, animationTime);
-    glm::quat relativeRotation = glm::inverse(q1) * endRotation;
+    //TODO try switch
+    glm::quat relativeRotation = endRotation * glm::inverse(q1);
 
     // Ensure the rotation is along the shortest arc
     if (relativeRotation.w < 0) {
@@ -87,7 +91,7 @@ glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2, float ani
 
     return relativeRotation;
 }
-
+/*
 glm::quat extractZRotation(const glm::quat& q) {
     // Convert quaternion to rotation matrix
     glm::mat4 rotMat = glm::mat4_cast(q);
@@ -99,6 +103,7 @@ glm::quat extractZRotation(const glm::quat& q) {
     return glm::angleAxis(angle, glm::vec3(0, 0, 1));
 }
 
+
 void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
 {
     //    && a_camera != CreationEngineGameModule::GetSceneGraphRoot()->starfieldScene.pStarFieldCamera
@@ -107,25 +112,20 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
     }
     static auto vr = VR::get();
 
-    if (!vr->is_hmd_active() && !Constants::cameraShake && ModSettingsStore::shouldShowFlatScreen()) {
+    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
         return;
     }
     //    spdlog::info("Updating world  camera fc[{}]", vr->m_frame_count);
 
-    if (!Constants::cameraShake) {
-        CreationEngineRendererModule::Get()->SetWindowSize(0, 0);
-    }
-
-
     bool  isLeftEye    = vr->get_current_render_eye() == VRRuntime::Eye::LEFT;
     auto  playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    bool  isHeadGun    = Constants::headTrackingType == 0 && playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0;
+    bool  isHeadGun    = ModConstants::headTrackingType == 0 && playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0;
 
     if (isHeadGun) {
         auto left_eye_pos = vr->get_runtime()->eyes[0][3];
         auto right_eye_pos = vr->get_runtime()->eyes[1][3];
         auto eye_delta = isLeftEye ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
-        if (Constants::dominantEye == isLeftEye) {
+        if (ModConstants::dominantEye == isLeftEye) {
             a_camera->local.translate.x = 0.0f;
             a_camera->local.translate.y = 0.0f;
             a_camera->local.translate.z = 0.0f;
@@ -143,7 +143,7 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
     }
 
     // TODO move update matrices logic to VR runtime so matrix calculation would be done once and only every other frame
-    if (!isLeftEye || Constants::cameraShake) {
+    if (!isLeftEye || ModConstants::cameraShake) {
         return;
     }
 
@@ -168,7 +168,7 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         auto roll_quat        = extractZRotation(current_hmd_rotation);
         auto left_handed_coord      = glm::quat(-roll_quat.w, roll_quat.x, -roll_quat.z, roll_quat.y);
         auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
-        if (!Constants::preventCameraRoll) {
+        if (!ModConstants::preventCameraRoll) {
             auto mat_cast = (RE::NiMatrix3*)&rot;
             rotateCamera(a_camera, mat_cast);
         }
@@ -181,6 +181,7 @@ void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpd
         rotateCamera(a_camera, mat_cast);
     }
 }
+*/
 
 void CreationEngineCameraManager::onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
 {
@@ -189,8 +190,6 @@ void CreationEngineCameraManager::onScaleformSetViewPort(uintptr_t* thisMovie, S
     onScaleformSetViewPortInternal(thisMovie, viewport);
     original_func(thisMovie, viewport);
 }
-
-bool adjust_fov = false;
 
 struct MenuSettings
 {
@@ -223,8 +222,8 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
     auto  cc                = reinterpret_cast<RE::Scaleform::GFx::MovieImpl*>(thisMovie);
     auto  file_url          = cc->GetMovieDef()->GetFileURL();
     auto  hash              = djb2Hash(file_url);
-    ModSettingsStore::renderMenu(file_url);
-    if (ModSettingsStore::shouldShowFlatScreen()|| !vr->is_hmd_active()) {
+    GameFlow::renderMenu(file_url);
+    if (GameFlow::shouldShowFlatScreen()|| !vr->is_hmd_active()) {
         return;
     }
     auto hmd_width              = vr->get_hmd_width();
@@ -248,7 +247,7 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
 
     // Implement offset based on dominant eye and menu-specific offset_value
     auto current_eye = vr->get_current_render_eye();
-    if (Constants::dominantEye == 1) {
+    if (ModConstants::dominantEye == 1) {
         // Dominant eye is right
         offset_left = (current_eye == VRRuntime::Eye::RIGHT) ? -settings.offset_value : 0;
     }
@@ -265,6 +264,7 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
     viewport->top       = std::max(0, (int)(viewport_buffer_height - visible_height) / 2 + offset_top);
     //    spdlog::info("movie {} [{}]", fmt::ptr(thisMovie), file_url);
 }
+/*
 
 void CreationEngineCameraManager::rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot)
 {
@@ -276,6 +276,7 @@ void CreationEngineCameraManager::rotateCamera(RE::NiCamera* a_camera, const RE:
     auto originalRotation  = originalRotations[(uintptr_t)a_camera];
     a_camera->local.rotate = originalRotation * *a_rot;
 }
+*/
 
 void CreationEngineCameraManager::onSetNimFrustum(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum)
 {
@@ -304,32 +305,12 @@ void CreationEngineCameraManager::onSetNiFrustumInternal(RE::NiCamera* pCamera, 
     }
     auto     eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
     auto     runtime         = vr->get_runtime();
-    auto     backbuffer_size = vr->get_backbuffer_size();
-    auto     widthAdjust     = adjust_fov ? ((float)backbuffer_size[0] / (float)runtime->get_width()) : 1.0f;
-    auto     heightAdjust    = adjust_fov ? ((float)backbuffer_size[1] / (float)runtime->get_height()) : 1.0f;
     Vector4f frustum         = runtime->frustums[eye];
     aiming_adjustments(frustum, get_fov_adjustment());
-    pFrustum->left   = frustum[0] * widthAdjust;
-    pFrustum->right  = frustum[1] * widthAdjust;
-    pFrustum->top    = frustum[2] * heightAdjust;
-    pFrustum->bottom = frustum[3] * heightAdjust;
-}
-
-void CreationEngineCameraManager::onScaleformMovieSetProjectionMatrix3D(uintptr_t* pInt, Matrix4x4f& mat)
-{
-    using func_t              = decltype(onScaleformMovieSetProjectionMatrix3DDetour);
-    static auto original_func = m_onScaleformMovieSetProjectionMatrix3DHook->get_original<func_t>();
-    /*spdlog::info("Setting projection matrix[0] {} {} {} {}", mat[0][0], mat[0][1], mat[0][2], mat[0][3]);
-    spdlog::info("Setting projection matrix[1] {} {} {} {}",
-     * mat[1][0],
-
-     * * mat[1][1], mat[1][2], mat[1][3]);
-    spdlog::info("Setting projection matrix[2] {} {} {} {}", mat[2][0], mat[2][1], mat[2][2], mat[2][3]);
-
-     * spdlog::info("Setting
-
-     * * projection matrix[3] {} {} {} {}", mat[3][0], mat[3][1], mat[3][2], mat[3][3]);*/
-    original_func(pInt, mat);
+    pFrustum->left   = frustum[0];
+    pFrustum->right  = frustum[1];
+    pFrustum->top    = frustum[2];
+    pFrustum->bottom = frustum[3];
 }
 
 void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float fov, float aspectRatio, float nearz, float farz, char lodAdjust)
@@ -352,12 +333,86 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
 
 float CreationEngineCameraManager::get_fov_adjustment() const
 {
-    return tanf((m_fov_adjust * Constants::DEG_TO_RAD) / 2.0f);
+    return tanf((m_fov_adjust * ModConstants::DEG_TO_RAD) / 2.0f);
 }
 
 float CreationEngineCameraManager::get_head_tracking_multiplier() const
 {
     static auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
     auto multiplier = (playerCamera->fov + m_fov_adjust) / playerCamera->fov;
-    return multiplier * Constants::headTrackingMultiplier;
+    return multiplier * ModConstants::headTrackingMultiplier;
+}
+
+void CreationEngineCameraManager::UpdateWorldCamera() {
+    static auto vr = VR::get();
+    auto worldCamera = CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera;
+
+    if(!worldCamera) {
+        return;
+    }
+
+    static auto originalRotation = worldCamera->local.rotate;
+    static auto originalPosition = worldCamera->local.translate;
+
+    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
+        worldCamera->local.rotate = originalRotation;
+        worldCamera->local.translate = originalPosition;
+        return;
+    }
+
+    static auto prev_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
+
+    if(GameFlow::isAimingDownSights() && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+
+        auto hmd_transform = vr->get_rotation(0);
+        auto eye = vr->get_current_eye_transform();
+        hmd_transform      = eye * hmd_transform;
+
+        auto current_rotation = mat_cast_to_havok_coord(glm::quat{ glm::extractMatrixRotation(hmd_transform) });
+
+        auto diff = rotationDifference(prev_rotation, current_rotation, get_head_tracking_multiplier());
+
+        prev_rotation = current_rotation;
+        if(diff.w < 0) {
+            diff = -diff;
+        }
+        float yaw_diff, pitch_diff, roll_diff;
+        // YXZ, YZX, ZYX, XYZ
+        // ZXY, XZY better
+        glm::extractEulerAngleXZY(glm::mat4_cast(diff), pitch_diff, yaw_diff, roll_diff);
+
+        auto new_yaw = p_player->data.angle.z + yaw_diff + 2.0f * glm::pi<float>();
+        new_yaw = std::fmod(new_yaw, 2.0f * glm::pi<float>());
+        p_player->data.angle.x = p_player->data.angle.x + pitch_diff;
+        p_player->data.angle.z = new_yaw;
+
+        auto offset = glm::mat4_cast(glm::quat{current_rotation.w, current_rotation.x, 0, current_rotation.z});
+        auto transform = glm::mat4_cast(current_rotation) * glm::inverse(offset);
+        transform = glm::rowMajor4(transform);
+
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) &transform;
+        worldCamera->local.translate.x = hmd_transform[3][0];
+        worldCamera->local.translate.y = -hmd_transform[3][2];
+        worldCamera->local.translate.z = hmd_transform[3][1];
+    } else {
+        auto head_rotation = vr->get_transform(0);
+        auto eye = vr->get_current_eye_transform();
+
+        head_rotation = eye * head_rotation;
+        auto rotation_quat = glm::normalize(glm::quat{head_rotation});
+        rotation_quat = {rotation_quat.w, -rotation_quat.x, rotation_quat.z, -rotation_quat.y};
+        worldCamera->local.translate.x = head_rotation[3][0];
+        worldCamera->local.translate.y = -head_rotation[3][2];
+        worldCamera->local.translate.z = head_rotation[3][1];
+        head_rotation = glm::mat4_cast(rotation_quat);
+        head_rotation = glm::rowMajor4(head_rotation);
+
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
+        if(GameFlow::gStore.internalSettings.headAimingAbsolute) {
+            prev_rotation = { 1.0f, 0.0f, 0.0f, 0.0f };
+        } else {
+            prev_rotation = rotation_quat;
+        }
+    }
 }

@@ -17,7 +17,8 @@
         "CMAKE_SHARED_LINKER_FLAGS": "$env{COMMONLIBSF_LINKER} $penv{SHARED_LINKER_FLAGS}",
         "USE_STARFIELD_SDK_LITE": "ON",
         "SFVR_EXPERIMENTAL": "OFF",
-        "USE_DXGI_HOOK": "ON"
+        "USE_DXGI_HOOK": "ON",
+        "POLYHOOK2_FUNCTION_HOOK": "OFF"
       },
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "generator": "Ninja",

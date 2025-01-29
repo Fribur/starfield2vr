@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
 #include <imgui.h>
 #include <json.hpp>
@@ -1371,7 +1372,7 @@ XrResult OpenXR::end_frame() {
     // in xrEndFrame, so we must only do it when shouldRender is true
     if (this->frame_state.shouldRender == XR_TRUE) {
         projection_layer_views.resize(this->stage_views.size(), {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW});
-        if (!ModSettingsStore::shouldShowFlatScreen()) {
+        if (!GameFlow::shouldShowFlatScreen()) {
             for (auto i = 0; i < projection_layer_views.size(); ++i) {
                 const auto& swapchain = this->swapchains[i];
 
@@ -1419,7 +1420,7 @@ XrResult OpenXR::end_frame() {
                 quad_layers[i].pose.orientation = {0.0f, 0.0f, 0.0f, 1.0f};
                 quad_layers[i].pose.position = this->stage_views[i].pose.position;
                 // Move 2m forward from eye position
-                quad_layers[i].pose.position.z -= ModSettingsStore::gStore.internalSettings.flatScreenDistance;
+                quad_layers[i].pose.position.z -= GameFlow::gStore.internalSettings.flatScreenDistance;
 
                 // Set size (2m wide, maintain aspect ratio)
                 float aspect_ratio = (float)swapchain.width / (float)swapchain.height;

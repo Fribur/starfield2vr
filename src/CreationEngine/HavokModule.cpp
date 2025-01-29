@@ -12,11 +12,11 @@ HavokModule::HavokModule() {
 }
 
 void HavokModule::install_hooks() {
-//    REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{(uintptr_t)MemoryScan::mod + 0x7993C0};
-//    ni_pointer_set_hook = std::make_unique<FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uintptr_t>(&onNiPointerSet));
-//    if(!ni_pointer_set_hook->create()) {
-//        spdlog::error("Failed to hook NiPointerSet");
-//    }
+    /*REL::Relocation<uintptr_t> onUpdateConstantBufferViewAddr{(uintptr_t)MemoryScan::mod + 0x7993C0};
+    ni_pointer_set_hook = std::make_unique<FunctionHook>(onUpdateConstantBufferViewAddr.address(), reinterpret_cast<uintptr_t>(&onNiPointerSet));
+    if(!ni_pointer_set_hook->create()) {
+        spdlog::error("Failed to hook NiPointerSet");
+    }*/
 
 /*
     REL::Relocation<uintptr_t> onHavokRayCastFromViewMuzzleAddr{(uintptr_t)MemoryScan::mod + 0x1a276ac};
