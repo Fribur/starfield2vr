@@ -3250,24 +3250,10 @@ void VR::on_xinput_get_state(void* st) {
 //        state->Gamepad.sThumbRY = 0;
 //    }
 
-    const auto system_button_down = is_action_active_any_joystick(m_action_system_button);
-    if(system_button_down) {
-        if(is_hand_behind_head(VRRuntime::Hand::LEFT, 0.2f)) {
-            pXinputGamepad->wButtons |= XINPUT_GAMEPAD_BACK;
-            pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_START;
-        } else {
-            pXinputGamepad->wButtons |= XINPUT_GAMEPAD_START;
-            pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_BACK;
-        }
 
-    } else {
-        pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_START;
-        pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_BACK;
-    }
-
-    const auto left_joystick = get_left_joystick();
-    const auto right_joystick = get_right_joystick();
     const auto wants_swap = m_swap_controllers->value();
+    const auto left_joystick = !wants_swap ? get_left_joystick():get_right_joystick();
+    const auto right_joystick = !wants_swap? get_right_joystick():get_left_joystick();
 
     const auto& a_button_left = !wants_swap ? m_action_a_button_left : m_action_a_button_right;
     const auto& a_button_right = !wants_swap ? m_action_a_button_right : m_action_a_button_left;
@@ -3299,9 +3285,7 @@ void VR::on_xinput_get_state(void* st) {
 
     const auto is_left_joystick_click_down = is_action_active(m_action_joystick_click, left_joystick);
     const auto is_right_joystick_click_down = is_action_active(m_action_joystick_click, right_joystick);
-    if(is_left_joystick_click_down && is_right_joystick_click_down) {
-        g_framework->set_draw_ui(!g_framework->is_drawing_ui());
-    } else {
+    {
         if (is_left_joystick_click_down) {
             pXinputGamepad->wButtons |= XINPUT_GAMEPAD_LEFT_THUMB;
         }
@@ -3313,10 +3297,34 @@ void VR::on_xinput_get_state(void* st) {
 
 
     const auto is_left_trigger_down = is_action_active(m_action_trigger, left_joystick);
-    m_left_trigger_down = is_left_trigger_down;
     const auto is_right_trigger_down = is_action_active(m_action_trigger, right_joystick);
     const auto is_left_grip_down = is_action_active(m_action_grip, left_joystick);
     const auto is_right_grip_down = is_action_active(m_action_grip, right_joystick);
+
+
+    if(is_left_joystick_click_down && is_left_grip_down) {
+        static std::chrono::steady_clock::time_point m_last_grip_click = std::chrono::steady_clock::now();
+        if(std::chrono::steady_clock::now() - m_last_grip_click > std::chrono::milliseconds(500)) {
+            m_last_grip_click                           = std::chrono::steady_clock::now();
+            auto& flatScreen = GameFlow::gStore.internalSettings.enforceFlatScreen;
+            flatScreen = !flatScreen;
+        }
+    }
+
+    const auto system_button_down = is_action_active_any_joystick(m_action_system_button);
+    if(system_button_down) {
+        if(is_left_grip_down) {
+            pXinputGamepad->wButtons |= XINPUT_GAMEPAD_BACK;
+            pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_START;
+        } else {
+            pXinputGamepad->wButtons |= XINPUT_GAMEPAD_START;
+            pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_BACK;
+        }
+
+    } else {
+        pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_START;
+        pXinputGamepad->wButtons &= ~XINPUT_GAMEPAD_BACK;
+    }
 
     if (is_right_grip_down) {
         pXinputGamepad->bLeftTrigger = 255;
@@ -3852,7 +3860,7 @@ void VR::on_draw_ui() {
         }
     }
 
-    ImGui::Combo("Sync Mode", (int*)&get_runtime()->custom_stage, "Early\0Late\0Very Late\0");
+//    ImGui::Combo("Sync Mode", (int*)&get_runtime()->custom_stage, "Early\0Late\0Very Late\0");
     ImGui::Separator();
 /*
     if (ImGui::Button("Set Standing Height")) {

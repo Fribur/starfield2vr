@@ -362,7 +362,7 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
 
     static auto prev_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
 
-    if(GameFlow::isAimingDownSights() && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+    if(!ModConstants::headTrackingType && GameFlow::isAimingDownSights() && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
         auto p_player = CreationEngineSingletonManager::GetPlayerRef();
 
         auto hmd_transform = vr->get_rotation(0);
@@ -392,9 +392,25 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         transform = glm::rowMajor4(transform);
 
         worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) &transform;
-        worldCamera->local.translate.x = hmd_transform[3][0];
-        worldCamera->local.translate.y = -hmd_transform[3][2];
-        worldCamera->local.translate.z = hmd_transform[3][1];
+
+
+        auto isDominantEye = vr->get_current_render_eye() == (ModConstants::dominantEye == 0 ? VRRuntime::Eye::RIGHT: VRRuntime::Eye::LEFT);
+        if(ModConstants::dominantEye == 2) {
+            worldCamera->local.translate.x = hmd_transform[3][0];
+            worldCamera->local.translate.y = -hmd_transform[3][2];
+            worldCamera->local.translate.z = hmd_transform[3][1];
+        } else if (isDominantEye) {
+            worldCamera->local.translate.x = 0.0f;
+            worldCamera->local.translate.y = 0.0f;
+            worldCamera->local.translate.z = 0.0f;
+        } else {
+            auto left_eye_pos = vr->get_runtime()->eyes[0][3];
+            auto right_eye_pos = vr->get_runtime()->eyes[1][3];
+            auto eye_delta = ModConstants::dominantEye == 0 ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
+            worldCamera->local.translate.x = eye_delta.x;
+            worldCamera->local.translate.y = -eye_delta.z;
+            worldCamera->local.translate.z = eye_delta.y;
+        }
     } else {
         auto head_rotation = vr->get_transform(0);
         auto eye = vr->get_current_eye_transform();

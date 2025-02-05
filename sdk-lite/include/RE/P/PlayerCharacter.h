@@ -1,6 +1,6 @@
 #pragma once
-
 #include <RE/T/TESObjectREFR.h>
+#include "RE/E/EquippedWeapon.h"
 
 namespace RE {
 
@@ -8,10 +8,48 @@ namespace RE {
         kIsInScene = 0x8,
     };
 
+    struct TESForm {
+        char pad[0x28];
+        int pad28;
+        uint8_t flags[4]; // 0x2E == 48 formTypeWeapon
+    };
+    static_assert(offsetof(TESForm, flags) == 0x2C);
+
+    struct EquippedItem {
+        TESForm* weaponInstanceData;
+        char pad[0x18];
+        EquippedWeapon::Data* equippedWeapon; // 0x20
+    };
+
+    /*
+     struct RE::EquippedItem
+{
+RE::TESObjectWEAP *weaponInstance;
+RE::TESObjectWEAPInstanceData *weaponInstanceData;
+RE::BGSEquipSlot *equipSlot;
+char pad[8];
+RE::EquippedWeapon::Data *equippedWeapon;
+};
+
+     */
+
+    static_assert(sizeof(EquippedItem) == 0x28);
+    static_assert(offsetof(EquippedItem, equippedWeapon) == 0x20);
+
+    struct EquippedItems {
+        int size;
+        int capacity;
+        EquippedItem* items;
+    };
+    static_assert(sizeof(EquippedItems) == 0x10);
+
     struct MiddleHighProcessData {
-        char pad0x0[0x518];
+        char pad0x0[0x270];
+        EquippedItems equippedItems; // 270
+        char pad0x278[0x298];
         uint32_t isInIronSights; // 08
     };
+    static_assert(offsetof(MiddleHighProcessData, isInIronSights) == 0x518);
 
     class AIProcess {
     public:
@@ -45,6 +83,64 @@ namespace RE {
         inline bool IsInFlyingState() const noexcept { return (actorState >> 14) & 7; }
         inline bool Immovable() const noexcept { return (actorState2 >> 12) & 1; }
         inline bool ControlledByAI() const noexcept { return (actorState2 >> 11) & 1; }
+
+        inline NiNode* getEquippedWeaponProjectile() const noexcept {
+            if(!currentProcess || !currentProcess->middleHigh) return nullptr;
+            auto equippedItem = currentProcess->middleHigh->equippedItems.items;
+            if(!equippedItem) return nullptr;
+            for(int i = 0; i < currentProcess->middleHigh->equippedItems.size; i++) {
+                if(equippedItem[i].weaponInstanceData->flags[2] == 48) {
+                    return equippedItem[i].equippedWeapon->visualModule->projectileNode;
+                }
+            }
+            return nullptr;
+        }
+
+        inline NiNode* getEquippedWeaponLaserSight() const noexcept {
+            if(!currentProcess || !currentProcess->middleHigh) return nullptr;
+            auto equippedItem = currentProcess->middleHigh->equippedItems.items;
+            if(!equippedItem) return nullptr;
+            for(int i = 0; i < currentProcess->middleHigh->equippedItems.size; i++) {
+                if(equippedItem[i].weaponInstanceData->flags[2] == 48) {
+                    return equippedItem[i].equippedWeapon->visualModule->laserNode;
+                }
+            }
+            return nullptr;
+        }
+
+        inline NiNode* getLaserNode(int deep) {
+            auto equippedWeaponNode = getEquippedWeaponLaserSight();
+            if(!equippedWeaponNode) return nullptr;
+            for(int i = 0; i < deep; i++) {
+                equippedWeaponNode = equippedWeaponNode->parent;
+                if(!equippedWeaponNode) return nullptr;
+            }
+            return equippedWeaponNode;
+        }
+
+        inline NiNode* getProjectileNode(int deep) {
+            auto equippedWeaponNode = getEquippedWeaponProjectile();
+            if(!equippedWeaponNode) return nullptr;
+            for(int i = 0; i < deep; i++) {
+                equippedWeaponNode = equippedWeaponNode->parent;
+                if(!equippedWeaponNode) return nullptr;
+            }
+            return equippedWeaponNode;
+        }
+
+        inline std::pair<NiNode*, NiNode*> getEquippedWeaponRootNode() const noexcept {
+            auto equippedWeaponNode = getEquippedWeaponProjectile();
+            if(!equippedWeaponNode) return {nullptr, nullptr};
+            NiNode* previousNode = nullptr;
+            while (equippedWeaponNode) {
+                if(strcmp(equippedWeaponNode->name.data(), "Weapon") == 0) {
+                    return {equippedWeaponNode, previousNode};
+                }
+                previousNode = equippedWeaponNode;
+                equippedWeaponNode = equippedWeaponNode->parent;
+            }
+            return {nullptr, nullptr};
+        }
 
     };
 

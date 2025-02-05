@@ -5,7 +5,9 @@
 #include "HavokModule.h"
 #include "CreationEngineSingletonManager.h"
 #include <CreationEngine/memory/ScanHelper.h>
+#include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
+#include "RE/N/NiCamera.h"
 
 HavokModule::HavokModule() {
     install_hooks();
@@ -17,20 +19,18 @@ void HavokModule::install_hooks() {
     if(!ni_pointer_set_hook->create()) {
         spdlog::error("Failed to hook NiPointerSet");
     }*/
-
 /*
     REL::Relocation<uintptr_t> onHavokRayCastFromViewMuzzleAddr{(uintptr_t)MemoryScan::mod + 0x1a276ac};
     m_havok_raycast_weapon_hook = std::make_unique<FunctionHook>(onHavokRayCastFromViewMuzzleAddr.address(), reinterpret_cast<uintptr_t>(&onHavokRaycast));
     if(!m_havok_raycast_weapon_hook->create()) {
         spdlog::error("Failed to hook Havok Raycast");
-    }
+    }*/
 
-    REL::Relocation<uintptr_t> onHavokRayCastFromWeaponMuzzleAddr{(uintptr_t)MemoryScan::mod + 0x2fdfdbc};
+    /*REL::Relocation<uintptr_t> onHavokRayCastFromWeaponMuzzleAddr{(uintptr_t)MemoryScan::mod + 0x2fdfdbc};
     m_havok_raycast_weapon2_hook = std::make_unique<FunctionHook>(onHavokRayCastFromWeaponMuzzleAddr.address(), reinterpret_cast<uintptr_t>(&onHavokRaycast2));
     if(!m_havok_raycast_weapon2_hook->create()) {
         spdlog::error("Failed to hook Havok Raycast 2");
-    }
-*/
+    }*/
 
 }
 
@@ -64,12 +64,31 @@ char HavokModule::onHavokRaycast2(uintptr_t* source, CEDebug::RayCastQuery* rayC
     auto original_fn = instance->m_havok_raycast_weapon2_hook->get_original<decltype(onHavokRaycast2)>();
     auto result = original_fn(source, rayCastQuery);
     if(result) {
-//        int size = sdk::gModSettings.debugData.points.size();
+        auto size = GameFlow::gStore.debugData.points.size();
+        RE::NiCamera* wCamera = CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera;
+        auto player = CreationEngineSingletonManager::GetPlayerRef();
+        const auto hit = *(RE::NiPoint3*) &rayCastQuery->point70;
+//        if(size == 2 && GetAsyncKeyState(VK_F12) & 1) {
+//            spdlog::info("Break here");
+//        }
+        static int frames = 0;
+        if(player && GameFlow::isAimingDownSights() && size > 0) {
+            auto wts = wCamera->WorldToScreen(hit);
+            if(frames > 210 && fabs(wts.x) < .1f && fabs(wts.y) < .1f) {
+                spdlog::info("Hit detected {} size {}", fmt::ptr(source), size);
+            }
+            frames++;
+        }
+        else {
+            frames = 0;
+        }
+
+
 //        // origin
-//        sdk::gSettings.debugData.points.push_back({rayCastQuery->point30});
+//        GameFlow::gStore.debugData.points.push_back({rayCastQuery->point30});
 //        sdk::gSettings.debugData.points.push_back({rayCastQuery->point40});
 //        // target
-//        sdk::gSettings.debugData.points.push_back({rayCastQuery->point70});
+        GameFlow::gStore.debugData.points.push_back({rayCastQuery->point70});
     }
     return result;
 }

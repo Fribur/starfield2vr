@@ -20,7 +20,7 @@ namespace GameFlow
         } hudSettings{};
         struct InternalSettings {
             bool enforceFlatScreen{false};
-            int headAimingAbsolute{0};
+            int headAimingAbsolute{1};
             float flatScreenDistance{1.5f};
             bool nvidiaAndTAAfix{true};
 

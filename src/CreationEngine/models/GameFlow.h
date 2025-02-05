@@ -4,6 +4,12 @@
 namespace GameFlow {
     struct State
     {
+
+        struct DebugWeaponData {
+            int deepLevel;
+            bool type;
+            float yaw{0.f}, pitch{0.f}, roll {0.f};
+        } debugWeaponData{};
         struct UiData {
             int rendered_menus_count[2]{};
             int modulino{0};
