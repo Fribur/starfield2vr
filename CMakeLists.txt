@@ -274,7 +274,7 @@ else()
 endif()
 
 if(XBOX_STORE)
-    set(OUTPUT_NAME ${OUTPUT_NAME}.xbox)
+#    set(OUTPUT_NAME ${OUTPUT_NAME}.xbox)
     add_compile_definitions(XBOX_STORE)
 endif()
 

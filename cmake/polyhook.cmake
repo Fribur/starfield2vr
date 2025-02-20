@@ -3,7 +3,7 @@ include(FetchContent)
 # Safetyhook
 FetchContent_Declare(
         PolyHook_2
-        GIT_REPOSITORY "git@github.com:stevemk14ebr/PolyHook_2_0.git"
+        GIT_REPOSITORY "https://github.com/stevemk14ebr/PolyHook_2_0.git"
         GIT_TAG "origin/master"
 )
 message("Fetching PolyHook_2_0")
