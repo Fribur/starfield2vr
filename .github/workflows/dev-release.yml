@@ -61,8 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            ${{github.workspace}}/starfield2vr*.zip
+          files: starfield2vr-*.zip
           draft: false
           prerelease: false
           generate_release_notes: true
