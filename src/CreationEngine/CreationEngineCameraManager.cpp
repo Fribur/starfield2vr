@@ -200,19 +200,32 @@ struct MenuSettings
 
 const std::unordered_map<uint32_t, MenuSettings> menu_settings = {
     {           "Interface/HUDMenu.gfx"_DJB, { 0.45f, 0.45f, 150 } },
+    {           "Interface/HUDMenu_LRG.gfx"_DJB, { 0.45f, 0.45f, 150 } },
     {   "Interface/HUDMessagesMenu.gfx"_DJB, { 0.45f, 0.45f, 150 } },
+    {   "Interface/HUDMessagesMenu_LRG.gfx"_DJB, { 0.45f, 0.45f, 150 } },
     {      "Interface/WorkshopMenu.swf"_DJB, { 0.45f, 0.45f, 150 } },
+    {      "Interface/WorkshopMenu_LRG.swf"_DJB, { 0.45f, 0.45f, 150 } },
     {         "Interface/ScopeMenu.swf"_DJB,   { 0.7f, 0.7f, 400 } },
+    {         "Interface/ScopeMenu_LRG.swf"_DJB,   { 0.7f, 0.7f, 400 } },
     {       "Interface/MonocleMenu.swf"_DJB,   { 0.7f, 0.7f, 200 } },
+    {       "Interface/MonocleMenu_LRG.swf"_DJB,   { 0.7f, 0.7f, 200 } },
     { "Interface/GalaxyStarMapMenu.swf"_DJB,     { 0.6f, 0.6f, 0 } },
+    { "Interface/GalaxyStarMapMenu_LRG.swf"_DJB,     { 0.6f, 0.6f, 0 } },
     {      "Interface/DialogueMenu.swf"_DJB,   { 0.6f, 0.6f, 100 } },
+    {      "Interface/DialogueMenu_LRG.swf"_DJB,   { 0.6f, 0.6f, 100 } },
     // Default settings
     {          "Interface/MainMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {          "Interface/MainMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
     {          "Interface/DataMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {          "Interface/DataMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
     {     "Interface/InventoryMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {     "Interface/InventoryMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
     {       "Interface/LoadingMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {       "Interface/LoadingMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
     {         "Interface/PauseMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {         "Interface/PauseMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
     {        "Interface/CursorMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
+    {        "Interface/CursorMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
 };
 
 void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)

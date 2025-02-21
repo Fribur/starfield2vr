@@ -18,32 +18,56 @@ namespace GameFlow
     void renderMenu(std::string_view menuNameHash) {
         switch (djb2Hash(menuNameHash.data())) {
         case "Interface/HUDMenu.gfx"_DJB:
+        case "Interface/HUDMenu_LRG.gfx"_DJB:
         case "Interface/SpaceshipHudMenu.swf"_DJB:
+        case "Interface/SpaceshipHudMenu_LRG.swf"_DJB:
             //            case "Interface/HUDMessagesMenu.gfx"_DJB:
         case "Interface/ScopeMenu.swf"_DJB:
+        case "Interface/ScopeMenu_LRG.swf"_DJB:
         case "Interface/FavoritesMenu.swf"_DJB:
+        case "Interface/FavoritesMenu_LRG.swf"_DJB:
         case "Interface/MonocleMenu.swf"_DJB:
+        case "Interface/MonocleMenu_LRG.swf"_DJB:
         case "Interface/DialogueMenu.swf"_DJB:
+        case "Interface/DialogueMenu_LRG.swf"_DJB:
             gState.uiData.rendered_menus_count[gState.uiData.modulino % 2]--;
             break;
         case "Interface/WorkshopMenu.swf"_DJB:
+        case "Interface/WorkshopMenu_LRG.swf"_DJB:
         case "Interface/ResearchMenu.swf"_DJB:
+        case "Interface/ResearchMenu_LRG.swf"_DJB:
         case "Interface/WeaponCraftingMenu.swf"_DJB:
+        case "Interface/WeaponCraftingMenu_LRG.swf"_DJB:
         case "Interface/WeaponsCraftingMenu.swf"_DJB:
+        case "Interface/WeaponsCraftingMenu_LRG.swf"_DJB:
         case "Interface/ArmorCraftingMenu.swf"_DJB:
+        case "Interface/ArmorCraftingMenu_LRG.swf"_DJB:
         case "Interface/IndustrialCraftingMenu.swf"_DJB:
+        case "Interface/IndustrialCraftingMenu_LRG.swf"_DJB:
         case "Interface/DrugsCraftingMenu.swf"_DJB:
+        case "Interface/DrugsCraftingMenu.swf_LRG"_DJB:
         case "Interface/SpaceShipEditorMenu.swf"_DJB:
+        case "Interface/SpaceShipEditorMenu_LRG.swf"_DJB:
         case "Interface/ShipCrewMenu.swf"_DJB:
+        case "Interface/ShipCrewMenu_LRG.swf"_DJB:
         case "Interface/SkillsMenu.swf"_DJB:
+        case "Interface/SkillsMenu_LRG.swf"_DJB:
         case "Interface/MainMenu.swf"_DJB:
+        case "Interface/MainMenu_LRG.swf"_DJB:
         case "Interface/CursorMenu.swf"_DJB:
+        case "Interface/CursorMenu_LRG.swf"_DJB:
         case "Interface/DataMenu.swf"_DJB:
+        case "Interface/DataMenu_LRG.swf"_DJB:
         case "Interface/InventoryMenu.swf"_DJB:
+        case "Interface/InventoryMenu_LRG.swf"_DJB:
         case "Interface/LoadingMenu.swf"_DJB:
+        case "Interface/LoadingMenu_LRG.swf"_DJB:
         case "Interface/PauseMenu.swf"_DJB:
+        case "Interface/PauseMenu_LRG.swf"_DJB:
         case "Interface/GalaxyStarMapMenu.swf"_DJB:
+        case "Interface/GalaxyStarMapMenu_LRG.swf"_DJB:
         case "Interface/StarMapMenu.swf"_DJB:
+        case "Interface/StarMapMenu_LRG.swf"_DJB:
             gState.uiData.rendered_menus_count[gState.uiData.modulino % 2]++;
             break;
         default:
