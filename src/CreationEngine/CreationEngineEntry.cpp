@@ -50,13 +50,13 @@ void CreationEngineEntry::on_draw_ui()
     {
         GameFlow::gStore.internalSettings.nvidiaAndTAAfix = m_taa_anf_nvidia_fix->value();
     }
+
+    for(auto& ui_part : GameFlow::gStore.debugData.ui_parts)
+    {
+        ImGui::Text("UI: %s", ui_part.data());
+    }
 #if 0
     if(0){
-        for(auto& ui_part : GameFlow::gStore.debugData.ui_parts)
-        {
-            ImGui::Text("UI: %s", ui_part.data());
-        }
-
         auto player = CreationEngineSingletonManager::GetPlayerRef();
         GameFlow::State::DebugWeaponData& debugWeaponData = GameFlow::gState.debugWeaponData;
 
