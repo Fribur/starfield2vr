@@ -23,6 +23,7 @@ namespace GameFlow
             int headAimingAbsolute{1};
             float flatScreenDistance{1.5f};
             bool nvidiaAndTAAfix{true};
+            bool preventZoom{false};
 
         } internalSettings{};
         DebugData debugData{};

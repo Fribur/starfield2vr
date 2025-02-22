@@ -34,7 +34,8 @@ private:
     const ModSlider::Ptr m_head_tracking_multiplier{ ModSlider::create(generate_name("HeadTrackingSensitivity"), 0.5, 2.0, 1.1) };
     const ModCombo::Ptr m_head_tracking_type{ ModCombo::create(generate_name("AimingMode"), s_aiming_mode) };
     const ModToggle::Ptr m_head_tracking_pose{ ModToggle::create(generate_name("AimingPose"), true) };
+    const ModToggle::Ptr m_disable_zoom{ ModToggle::create(generate_name("DisableZoom"), false) };
     const ModToggle::Ptr m_taa_anf_nvidia_fix{ ModToggle::create(generate_name("NvidiaDlssAndTaaFix"), true) };
 
-    ValueList m_options{ *m_dominant_eye, *m_head_tracking_multiplier, *m_head_tracking_type, *m_taa_anf_nvidia_fix, *m_head_tracking_pose};
+    ValueList m_options{ *m_dominant_eye, *m_head_tracking_multiplier, *m_head_tracking_type, *m_taa_anf_nvidia_fix, *m_head_tracking_pose, *m_disable_zoom};
 };

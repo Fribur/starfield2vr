@@ -346,6 +346,9 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
 
 float CreationEngineCameraManager::get_fov_adjustment() const
 {
+    if(GameFlow::gStore.internalSettings.preventZoom) {
+        return 0.0f;
+    }
     return tanf((m_fov_adjust * ModConstants::DEG_TO_RAD) / 2.0f);
 }
 

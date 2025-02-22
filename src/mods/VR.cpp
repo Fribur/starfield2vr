@@ -3302,7 +3302,7 @@ void VR::on_xinput_get_state(void* st) {
     const auto is_right_grip_down = is_action_active(m_action_grip, right_joystick);
 
 
-    if(is_left_joystick_click_down && is_left_grip_down) {
+    if((is_left_joystick_click_down && is_left_grip_down) || (GetAsyncKeyState(VK_F12) & 1)) {
         static std::chrono::steady_clock::time_point m_last_grip_click = std::chrono::steady_clock::now();
         if(std::chrono::steady_clock::now() - m_last_grip_click > std::chrono::milliseconds(500)) {
             m_last_grip_click                           = std::chrono::steady_clock::now();

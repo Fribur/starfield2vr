@@ -50,6 +50,9 @@ void CreationEngineEntry::on_draw_ui()
     {
         GameFlow::gStore.internalSettings.nvidiaAndTAAfix = m_taa_anf_nvidia_fix->value();
     }
+    if(m_disable_zoom->draw("Prevent Game controlled Zooming")) {
+        GameFlow::gStore.internalSettings.preventZoom = m_disable_zoom->value();
+    }
 
     for(auto& ui_part : GameFlow::gStore.debugData.ui_parts)
     {
@@ -185,6 +188,7 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     ModConstants::headTrackingType = m_head_tracking_type->value();
     GameFlow::gStore.internalSettings.nvidiaAndTAAfix = m_taa_anf_nvidia_fix->value();
     GameFlow::gStore.internalSettings.headAimingAbsolute = m_head_tracking_pose->value();
+    GameFlow::gStore.internalSettings.preventZoom = m_disable_zoom->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)
