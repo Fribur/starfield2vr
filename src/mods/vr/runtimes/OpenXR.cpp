@@ -1400,16 +1400,16 @@ XrResult OpenXR::end_frame() {
             layer.views = projection_layer_views.data();
             layers.push_back((XrCompositionLayerBaseHeader*)&layer);
         } else {
-            quad_layers.resize(this->stage_views.size());
+            quad_layers.resize(1);
             // Initialize quad layers for each eye
-            for (size_t i = 0; i < this->stage_views.size(); ++i) {
+            for (size_t i = 0; i < 1; ++i) {
                 const auto& swapchain = this->swapchains[i];
 
                 quad_layers[i] = {XR_TYPE_COMPOSITION_LAYER_QUAD};
                 quad_layers[i].next = nullptr;
                 quad_layers[i].layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
                 quad_layers[i].space = this->stage_space;
-                quad_layers[i].eyeVisibility = (i == 0) ? XR_EYE_VISIBILITY_LEFT : XR_EYE_VISIBILITY_RIGHT;
+                quad_layers[i].eyeVisibility = XR_EYE_VISIBILITY_BOTH;
 
                 // Configure swapchain
                 quad_layers[i].subImage.swapchain = swapchain.handle;
