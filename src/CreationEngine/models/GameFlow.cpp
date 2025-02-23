@@ -10,10 +10,10 @@ namespace GameFlow
     auto vr = VR::get();
 
     const std::unordered_map<uint32_t, MenuSettings> menu_settings = {
-            {         "Interface/ScopeMenu.swf"_DJB,   { 0.7f, 400 } },
-            {         "Interface/ScopeMenu_LRG.swf"_DJB,   { 0.7f, 400 } },
-            {       "Interface/MonocleMenu.swf"_DJB,   { 0.7f, 400 } },
-            {       "Interface/MonocleMenu_LRG.swf"_DJB,   { 0.7f, 400 } }
+            {         "Interface/ScopeMenu.swf"_DJB,   { 1.0f, 400 } },
+            {         "Interface/ScopeMenu_LRG.swf"_DJB,   { 1.0f, 400 } },
+            {       "Interface/MonocleMenu.swf"_DJB,   { 0.6f, 100 } },
+            {       "Interface/MonocleMenu_LRG.swf"_DJB,   { 0.6f, 100 } }
     };
 
     void resetGameState() {

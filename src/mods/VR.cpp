@@ -3338,11 +3338,16 @@ void VR::on_xinput_get_state(void* st) {
     const auto thumbrest_touch_left_down = is_action_active_any_joystick(m_action_thumbrest_touch_left);
 
 
-    if (thumbrest_touch_right_down) {
+    if (thumbrest_touch_right_down && !GameFlow::gStore.internalSettings.alternativeJoyLayout) {
         pXinputGamepad->wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER;
+    } else if(is_left_grip_down && is_right_trigger_down && GameFlow::gStore.internalSettings.alternativeJoyLayout) {
+        pXinputGamepad->wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER;
+        pXinputGamepad->bRightTrigger = 0;
     }
 
-    if (thumbrest_touch_left_down) {
+    if (thumbrest_touch_left_down && !GameFlow::gStore.internalSettings.alternativeJoyLayout) {
+        pXinputGamepad->wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER;
+    } else if(is_left_grip_down && is_left_trigger_down && GameFlow::gStore.internalSettings.alternativeJoyLayout) {
         pXinputGamepad->wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER;
     }
 

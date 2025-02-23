@@ -24,6 +24,7 @@ namespace GameFlow
             float flatScreenDistance{1.5f};
             bool nvidiaAndTAAfix{true};
             bool preventZoom{false};
+            bool alternativeJoyLayout{false};
 
         } internalSettings{};
         DebugData debugData{};

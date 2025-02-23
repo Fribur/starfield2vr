@@ -33,13 +33,13 @@ void CreationEngineEntry::on_draw_ui()
     {
         GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
     }
-    /*if(m_hud_scale_y->draw("HUD Scale Y"))
-    {
-        GameFlow::gStore.hudSettings.scaleY = m_hud_scale_y->value();
-    }*/
     if(m_hud_perspective->draw("HUD Perspective"))
     {
         GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
+    }
+    if(m_alternative_joy_layout->draw("Alternative Joy Layout"))
+    {
+        GameFlow::gStore.internalSettings.alternativeJoyLayout = m_alternative_joy_layout->value();
     }
     if(m_dominant_eye->draw("Dominant Eye"))
     {
@@ -201,8 +201,8 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     GameFlow::gStore.internalSettings.headAimingAbsolute = m_head_tracking_pose->value();
     GameFlow::gStore.internalSettings.preventZoom = m_disable_zoom->value();
     GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
-//    GameFlow::gStore.hudSettings.scaleY = m_hud_scale_y->value();
     GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
+    GameFlow::gStore.internalSettings.alternativeJoyLayout = m_alternative_joy_layout->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)

@@ -228,9 +228,8 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
     auto visible_height = std::min((int)((float)backbuffer_size[1] * height_multiplier), viewport_buffer_height);
     viewport->width     = visible_width;
     viewport->height    = visible_height;
-    viewport->left      = std::max(0, (int)(viewport_buffer_width - visible_width) / 2 + offset_left);
-    viewport->top       = std::max(0, (int)(viewport_buffer_height - visible_height) / 2 + offset_top);
-    //    spdlog::info("movie {} [{}]", fmt::ptr(thisMovie), file_url);
+    viewport->left      = (int)(viewport_buffer_width - visible_width) / 2 + offset_left;
+    viewport->top       = (int)(viewport_buffer_height - visible_height) / 2 + offset_top;
 }
 /*
 
