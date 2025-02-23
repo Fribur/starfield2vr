@@ -9,6 +9,13 @@ namespace GameFlow
     State gState{};
     auto vr = VR::get();
 
+    const std::unordered_map<uint32_t, MenuSettings> menu_settings = {
+            {         "Interface/ScopeMenu.swf"_DJB,   { 0.7f, 400 } },
+            {         "Interface/ScopeMenu_LRG.swf"_DJB,   { 0.7f, 400 } },
+            {       "Interface/MonocleMenu.swf"_DJB,   { 0.7f, 400 } },
+            {       "Interface/MonocleMenu_LRG.swf"_DJB,   { 0.7f, 400 } }
+    };
+
     void resetGameState() {
         gStore.debugData.ui_parts.clear();
         gState.uiData.modulino++;
@@ -76,6 +83,22 @@ namespace GameFlow
         }
         gStore.debugData.ui_parts.push_back(menuNameHash);
     }
+
+    MenuSettings getMenuSettings(std::string_view menuUrl) {
+        auto hash = djb2Hash(menuUrl.data());
+        MenuSettings settings = {gStore.hudSettings.hudScale, gStore.hudSettings.perspective };
+        auto         it       = menu_settings.find(hash);
+        if (it != menu_settings.end()) {
+            settings.hud_scale = it->second.hud_scale;
+            settings.perspective += it->second.perspective;
+        }
+        auto isMenu = gState.uiData.rendered_menus_count[(gState.uiData.modulino + 1) % 2] >= 0;
+        if(isMenu) {
+            settings.perspective = 0;
+        }
+        return settings;
+    }
+
 
     bool shouldShowFlatScreen() {
         if(vr->get_runtime()->loaded && vr->get_runtime()->is_openvr()) {

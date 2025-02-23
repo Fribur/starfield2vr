@@ -2,6 +2,11 @@
 #include "glm/glm.hpp"
 
 namespace GameFlow {
+    struct MenuSettings
+    {
+        float hud_scale;
+        int   perspective;
+    };
     struct State
     {
 
@@ -24,6 +29,7 @@ namespace GameFlow {
     extern State gState;
 
     void renderMenu(std::string_view menuNameHash);
+    MenuSettings getMenuSettings(std::string_view menuNameHash);
     bool shouldShowFlatScreen();
     bool isAimingDownSights();
     bool isWeaponDrawn();

@@ -191,86 +191,41 @@ void CreationEngineCameraManager::onScaleformSetViewPort(uintptr_t* thisMovie, S
     original_func(thisMovie, viewport);
 }
 
-struct MenuSettings
-{
-    float width_multiplier;
-    float height_multiplier;
-    int   offset_value;
-};
-
-const std::unordered_map<uint32_t, MenuSettings> menu_settings = {
-    {           "Interface/HUDMenu.gfx"_DJB, { 0.45f, 0.45f, 150 } },
-    {           "Interface/HUDMenu_LRG.gfx"_DJB, { 0.45f, 0.45f, 150 } },
-    {   "Interface/HUDMessagesMenu.gfx"_DJB, { 0.45f, 0.45f, 150 } },
-    {   "Interface/HUDMessagesMenu_LRG.gfx"_DJB, { 0.45f, 0.45f, 150 } },
-    {      "Interface/WorkshopMenu.swf"_DJB, { 0.45f, 0.45f, 150 } },
-    {      "Interface/WorkshopMenu_LRG.swf"_DJB, { 0.45f, 0.45f, 150 } },
-    {         "Interface/ScopeMenu.swf"_DJB,   { 0.7f, 0.7f, 400 } },
-    {         "Interface/ScopeMenu_LRG.swf"_DJB,   { 0.7f, 0.7f, 400 } },
-    {       "Interface/MonocleMenu.swf"_DJB,   { 0.7f, 0.7f, 200 } },
-    {       "Interface/MonocleMenu_LRG.swf"_DJB,   { 0.7f, 0.7f, 200 } },
-    { "Interface/GalaxyStarMapMenu.swf"_DJB,     { 0.6f, 0.6f, 0 } },
-    { "Interface/GalaxyStarMapMenu_LRG.swf"_DJB,     { 0.6f, 0.6f, 0 } },
-    {      "Interface/DialogueMenu.swf"_DJB,   { 0.6f, 0.6f, 100 } },
-    {      "Interface/DialogueMenu_LRG.swf"_DJB,   { 0.6f, 0.6f, 100 } },
-    // Default settings
-    {          "Interface/MainMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {          "Interface/MainMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {          "Interface/DataMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {          "Interface/DataMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {     "Interface/InventoryMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {     "Interface/InventoryMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {       "Interface/LoadingMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {       "Interface/LoadingMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {         "Interface/PauseMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {         "Interface/PauseMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {        "Interface/CursorMenu.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-    {        "Interface/CursorMenu_LRG.swf"_DJB,    { 0.4f, 0.35f, 0 } },
-};
-
 void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
 {
 
     static auto vr = VR::get();
     auto  cc                = reinterpret_cast<RE::Scaleform::GFx::MovieImpl*>(thisMovie);
     auto  file_url          = cc->GetMovieDef()->GetFileURL();
-    auto  hash              = djb2Hash(file_url);
     GameFlow::renderMenu(file_url);
-    if (GameFlow::shouldShowFlatScreen()|| !vr->is_hmd_active()) {
+    if (GameFlow::shouldShowFlatScreen() || !vr->is_hmd_active()) {
         return;
     }
-    auto hmd_width              = vr->get_hmd_width();
-    auto hmd_height             = vr->get_hmd_height();
+    auto backbuffer_size              = vr->get_backbuffer_size();
     auto viewport_buffer_width  = viewport->bufferWidth;
     auto viewport_buffer_height = viewport->bufferHeight;
 
     int   offset_left       = 0;
     int   offset_top        = 0;
-    float width_multiplier  = 1.0f;
-    float height_multiplier = 1.0f;
 
-    MenuSettings settings = { 0.4f, 0.35f, 0 }; // Default settings
-    auto         it       = menu_settings.find(hash);
-    if (it != menu_settings.end()) {
-        settings = it->second;
-    }
+    auto settings = GameFlow::getMenuSettings(file_url);
 
-    width_multiplier  = settings.width_multiplier;
-    height_multiplier = settings.height_multiplier;
+    auto width_multiplier  = settings.hud_scale;
+    auto height_multiplier = settings.hud_scale;
 
     // Implement offset based on dominant eye and menu-specific offset_value
     auto current_eye = vr->get_current_render_eye();
     if (ModConstants::dominantEye == 1) {
         // Dominant eye is right
-        offset_left = (current_eye == VRRuntime::Eye::RIGHT) ? -settings.offset_value : 0;
+        offset_left = (current_eye == VRRuntime::Eye::RIGHT) ? -settings.perspective : 0;
     }
     else {
         // Dominant eye is left
-        offset_left = (current_eye == VRRuntime::Eye::LEFT) ? settings.offset_value : 0;
+        offset_left = (current_eye == VRRuntime::Eye::LEFT) ? settings.perspective : 0;
     }
 
-    auto visible_width  = std::min((int)(hmd_width * width_multiplier), viewport_buffer_width);
-    auto visible_height = std::min((int)(hmd_height * height_multiplier), viewport_buffer_height);
+    auto visible_width  = std::min((int)((float)backbuffer_size[0] * width_multiplier), viewport_buffer_width);
+    auto visible_height = std::min((int)((float)backbuffer_size[1] * height_multiplier), viewport_buffer_height);
     viewport->width     = visible_width;
     viewport->height    = visible_height;
     viewport->left      = std::max(0, (int)(viewport_buffer_width - visible_width) / 2 + offset_left);

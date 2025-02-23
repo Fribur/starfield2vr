@@ -15,8 +15,8 @@ namespace GameFlow
     struct Settings
     {
         struct HudSettings {
-            float scaleX{1.0f};
-            float scaleY{1.0f};
+            float hudScale{0.4f};
+            int perspective{150};
         } hudSettings{};
         struct InternalSettings {
             bool enforceFlatScreen{false};

@@ -28,8 +28,19 @@ void CreationEngineEntry::on_draw_ui()
         return;
     }
     auto vr = VR::get();
-    ImGui::Text("IPD: %f", vr->get_runtime()->get_ipd());
-    ImGui::Text("DominantEye Reflect %d", ModConstants::dominantEye);
+    ImGui::Text("IPD from runtime: %f", vr->get_runtime()->get_ipd());
+    if(m_hud_scale->draw("HUD Scale"))
+    {
+        GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
+    }
+    /*if(m_hud_scale_y->draw("HUD Scale Y"))
+    {
+        GameFlow::gStore.hudSettings.scaleY = m_hud_scale_y->value();
+    }*/
+    if(m_hud_perspective->draw("HUD Perspective"))
+    {
+        GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
+    }
     if(m_dominant_eye->draw("Dominant Eye"))
     {
         ModConstants::dominantEye = m_dominant_eye->value();
@@ -189,6 +200,9 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     GameFlow::gStore.internalSettings.nvidiaAndTAAfix = m_taa_anf_nvidia_fix->value();
     GameFlow::gStore.internalSettings.headAimingAbsolute = m_head_tracking_pose->value();
     GameFlow::gStore.internalSettings.preventZoom = m_disable_zoom->value();
+    GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
+//    GameFlow::gStore.hudSettings.scaleY = m_hud_scale_y->value();
+    GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)

@@ -2,15 +2,8 @@
 
 namespace ModConstants
 {
-    inline float minimumCameraRotationAngle =  0.0000099999997f;
-    inline float minimumCameraRotationAngle2 = 0.00000011920929f; //epsilon float
-
-    inline float yawMultiplier = 1.0f;
-    inline float pitchMultiplier = 1.0f;
     inline float headTrackingMultiplier = 1.0f;
 
-    inline float scaleHUDX = 0.25f;
-    inline float scaleHUDY = 0.25f;
     inline constexpr float DEG_TO_RAD = std::numbers::pi / 180;
     inline float lodAdjustFov = 0.0f;
     inline float fixedCameraRoll = 0.0f;
