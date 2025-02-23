@@ -2111,10 +2111,14 @@ Matrix4x4f VR::get_current_eye_transform(bool flip) {
     auto mod_count = flip ? m_right_eye_interval : m_left_eye_interval;
 
     if (m_frame_count % 2 == mod_count) {
-        return get_runtime()->eyes[vr::Eye_Left];
+        auto r = get_runtime()->eyes[vr::Eye_Left];
+        r[3] *= GameFlow::gStore.internalSettings.worldScale;
+        return r;
     }
 
-    return get_runtime()->eyes[vr::Eye_Right];
+    auto r = get_runtime()->eyes[vr::Eye_Right];
+    r[3] *= GameFlow::gStore.internalSettings.worldScale;
+    return r;
 }
 
 Matrix4x4f VR::get_current_projection_matrix(bool flip) {

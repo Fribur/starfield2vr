@@ -93,7 +93,6 @@ public:
     const auto get_backbuffer_size() const { return m_d3d12.get_backbuffer_size(); }
 
     //unsigned long frame_count_temp{0};
-    float separation_ipd{0.068f};
 
     template<typename T = VRRuntime>
     T* get_runtime() const {

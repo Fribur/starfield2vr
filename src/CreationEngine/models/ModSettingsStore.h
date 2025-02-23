@@ -25,7 +25,7 @@ namespace GameFlow
             bool nvidiaAndTAAfix{true};
             bool preventZoom{false};
             bool alternativeJoyLayout{false};
-
+            float worldScale{1.0f};
         } internalSettings{};
         DebugData debugData{};
     };

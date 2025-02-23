@@ -29,6 +29,10 @@ void CreationEngineEntry::on_draw_ui()
     }
     auto vr = VR::get();
     ImGui::Text("IPD from runtime: %f", vr->get_runtime()->get_ipd());
+    if(m_world_scale->draw("World Scale"))
+    {
+        GameFlow::gStore.internalSettings.worldScale = m_world_scale->value();
+    }
     if(m_hud_scale->draw("HUD Scale"))
     {
         GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
@@ -203,6 +207,7 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
     GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
     GameFlow::gStore.internalSettings.alternativeJoyLayout = m_alternative_joy_layout->value();
+    GameFlow::gStore.internalSettings.worldScale = m_world_scale->value();
 }
 
 void CreationEngineEntry::on_config_save(utility::Config& cfg)
