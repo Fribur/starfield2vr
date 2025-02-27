@@ -564,7 +564,7 @@ private:
     bool m_disable_post_effect_fix{false};
 
     ValueList m_options{
-//        *m_set_standing_key,
+        *m_set_standing_key,
 //        *m_recenter_view_key,
 //        *m_decoupled_pitch,
 //        *m_use_afr,

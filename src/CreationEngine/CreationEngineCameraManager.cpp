@@ -383,6 +383,8 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         }
     } else {
         auto head_rotation = vr->get_transform(0);
+        auto standing_origin = vr->get_standing_origin();
+        head_rotation[3] = head_rotation[3] - standing_origin;
         auto eye = vr->get_current_eye_transform();
 
         head_rotation = eye * head_rotation;
