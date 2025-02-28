@@ -375,7 +375,7 @@ private:
     std::shared_ptr<runtimes::OpenVR> m_openvr{std::make_shared<runtimes::OpenVR>()};
     std::shared_ptr<runtimes::OpenXR> m_openxr{std::make_shared<runtimes::OpenXR>()};
 
-    Vector4f m_standing_origin{ 0.0f, 1.5f, 0.0f, 0.0f };
+    Vector4f m_standing_origin{ 0.0f, 0.0f, 0.0f, 1.0f };
     glm::quat m_rotation_offset{ glm::identity<glm::quat>() };
     glm::quat m_gui_rotation_offset{ glm::identity<glm::quat>() };
 
@@ -564,7 +564,7 @@ private:
     bool m_disable_post_effect_fix{false};
 
     ValueList m_options{
-//        *m_set_standing_key,
+        *m_set_standing_key,
 //        *m_recenter_view_key,
 //        *m_decoupled_pitch,
 //        *m_use_afr,

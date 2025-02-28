@@ -3875,11 +3875,11 @@ void VR::on_draw_ui() {
     if (ImGui::Button("Set Standing Height")) {
         m_standing_origin.y = get_position(0).y;
     }
-
+*/
     if (ImGui::Button("Set Standing Origin") || m_set_standing_key->is_key_down_once()) {
         m_standing_origin = get_position(0);
     }
-
+/*
     if (ImGui::Button("Recenter View") || m_recenter_view_key->is_key_down_once()) {
         recenter_view();
     }*/
