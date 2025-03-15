@@ -15,6 +15,8 @@
 #include <cstdlib>
 #include <glm/gtx/vector_angle.hpp>
 #include <mods/VR.hpp>
+#include <utility/REMath.hpp>
+
 /*
 
 void onUpdateNiCameraDetour(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
@@ -330,20 +332,21 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         return;
     }
 
-    static auto prev_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
+    static auto prev_havok_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
+    static auto prev_hmd_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
 
     if(!ModConstants::headTrackingType && GameFlow::isAimingDownSights() && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
         auto p_player = CreationEngineSingletonManager::GetPlayerRef();
 
         auto hmd_transform = vr->get_rotation(0);
         auto eye = vr->get_current_eye_transform();
-        hmd_transform      = eye * hmd_transform;
+        hmd_transform      = hmd_transform * eye;
 
-        auto current_rotation = mat_cast_to_havok_coord(glm::quat{ glm::extractMatrixRotation(hmd_transform) });
+        auto current_rotation = glm::quat{ glm::rowMajor4(utility::math::to_havok_space(glm::extractMatrixRotation(hmd_transform))) };
 
-        auto diff = rotationDifference(prev_rotation, current_rotation, get_head_tracking_multiplier());
+        auto diff = rotationDifference(prev_havok_rotation, current_rotation, get_head_tracking_multiplier());
 
-        prev_rotation = current_rotation;
+        prev_havok_rotation = current_rotation;
         if(diff.w < 0) {
             diff = -diff;
         }
@@ -367,8 +370,8 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         auto isDominantEye = vr->get_current_render_eye() == (ModConstants::dominantEye == 0 ? VRRuntime::Eye::RIGHT: VRRuntime::Eye::LEFT);
         if(ModConstants::dominantEye == 2) {
             worldCamera->local.translate.x = hmd_transform[3][0];
-            worldCamera->local.translate.y = -hmd_transform[3][2];
-            worldCamera->local.translate.z = hmd_transform[3][1];
+            worldCamera->local.translate.y = hmd_transform[3][1];
+            worldCamera->local.translate.z = hmd_transform[3][2];
         } else if (isDominantEye) {
             worldCamera->local.translate.x = 0.0f;
             worldCamera->local.translate.y = 0.0f;
@@ -378,8 +381,32 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
             auto right_eye_pos = vr->get_runtime()->eyes[1][3];
             auto eye_delta = ModConstants::dominantEye == 0 ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
             worldCamera->local.translate.x = eye_delta.x;
-            worldCamera->local.translate.y = -eye_delta.z;
-            worldCamera->local.translate.z = eye_delta.y;
+            worldCamera->local.translate.y = eye_delta.y;
+            worldCamera->local.translate.z = eye_delta.z;
+        }
+    } else if (false && GameFlow::gStore.internalSettings.pawnControlRotation) {
+        /* havok Z-up Y-forward X-right */
+//        auto& world_rotate = worldCamera->parent->world.rotate;
+//        glm::vec3  world_forward = { world_rotate[0][1], world_rotate[2][1], world_rotate[1][1]};
+
+        auto head_rotation = vr->get_transform(0);
+        auto standing_origin = vr->get_standing_origin();
+        head_rotation[3].x -= standing_origin.x;
+        head_rotation[3].y -= standing_origin.y;
+        head_rotation[3].z -= standing_origin.z;
+        auto eye = vr->get_current_eye_transform();
+
+        head_rotation = head_rotation * eye;
+        head_rotation =  utility::math::to_havok_space(head_rotation);
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
+        worldCamera->local.translate.x = head_rotation[3][0];
+        worldCamera->local.translate.y = head_rotation[3][1];
+        worldCamera->local.translate.z = head_rotation[3][2];
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
+        if(GameFlow::gStore.internalSettings.headAimingAbsolute) {
+            prev_havok_rotation = {1.0f, 0.0f, 0.0f, 0.0f };
+        } else {
+            prev_havok_rotation = glm::normalize(glm::quat_cast(glm::extractMatrixRotation(glm::rowMajor4(head_rotation))));
         }
     } else {
         auto head_rotation = vr->get_transform(0);
@@ -389,20 +416,18 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         head_rotation[3].z -= standing_origin.z;
         auto eye = vr->get_current_eye_transform();
 
-        head_rotation = eye * head_rotation;
-        auto rotation_quat = glm::normalize(glm::quat{head_rotation});
-        rotation_quat = {rotation_quat.w, -rotation_quat.x, rotation_quat.z, -rotation_quat.y};
+        head_rotation = head_rotation * eye;
+        head_rotation =  utility::math::to_havok_space(head_rotation);
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
         worldCamera->local.translate.x = head_rotation[3][0];
-        worldCamera->local.translate.y = -head_rotation[3][2];
-        worldCamera->local.translate.z = head_rotation[3][1];
-        head_rotation = glm::mat4_cast(rotation_quat);
-        head_rotation = glm::rowMajor4(head_rotation);
+        worldCamera->local.translate.y = head_rotation[3][1];
+        worldCamera->local.translate.z = head_rotation[3][2];
 
         worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
         if(GameFlow::gStore.internalSettings.headAimingAbsolute) {
-            prev_rotation = { 1.0f, 0.0f, 0.0f, 0.0f };
+            prev_havok_rotation = {1.0f, 0.0f, 0.0f, 0.0f };
         } else {
-            prev_rotation = rotation_quat;
+            prev_havok_rotation = glm::normalize(glm::quat_cast(glm::extractMatrixRotation(glm::rowMajor4(head_rotation))));
         }
     }
 }

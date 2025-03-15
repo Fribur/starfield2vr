@@ -23,6 +23,29 @@ namespace Steam::MemoryOffsets
         }
     } // namespace Setting
 
+    namespace FirstPersonState {
+        inline uintptr_t Update() {
+            static auto val = (uintptr_t)mod + 0x2ac83dc;
+            return val;
+        }
+    }
+
+    namespace BSSceneNode {
+        inline uintptr_t vtable_Update() {
+            static auto pattern = ".?AVBSSceneNode@@";
+            static auto addr = ((uintptr_t*)VTable("BSSceneNode::vftable", pattern, 0x55ad438))[73];
+            return addr;
+        }
+    }
+
+    namespace NiNode {
+        inline uintptr_t vtable_UpdateWorld() {
+            static auto pattern = ".?AVNiNode@@";
+            static auto addr = ((uintptr_t*)VTable("NiNode::vftable", pattern, 0x37DE584))[79];
+            return addr;
+        }
+    }
+
     namespace NiCamera
     {
         inline uintptr_t SetFrustumVfunc()
@@ -285,6 +308,14 @@ namespace Xbox::MemoryOffsets
             return val;
         }
     } // namespace Setting
+
+    namespace NiNode {
+        inline uintptr_t vtable_UpdateWorld() {
+            static auto pattern = ".?AVNiNode@@";
+            static auto addr = ((uintptr_t*)VTable("NiNode::vftable", pattern, 0x37DE584))[79];
+            return addr;
+        }
+    }
 
     namespace NiCamera
     {

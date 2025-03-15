@@ -49,8 +49,8 @@ namespace RE
 		inline bool IsInFirstPerson() const {
         return QCameraEquals(CameraState::kFirstPerson);
     }
-
-    char 			   pad8[0x170];                     //0x0170
+        NiNode*       sceneNode;                  //0x0008 BSSceneNode
+        char 			   pad8[0x168];                     //0x0170
 		FirstPersonState*      pFirstPersonModeState;         //0x0178
 		TESCameraState*   pVanityState;                  //0x0178
 		TESCameraState*   pVatsCameraState;              //0x0180

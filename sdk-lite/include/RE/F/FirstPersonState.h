@@ -5,12 +5,15 @@ namespace RE
 
     class NiCamera;
     class NiNode;
+    class PlayerCamera;
 
 	class FirstPersonState
 	{
 	public:
 		virtual ~FirstPersonState();  // 00
-    char pad8[0x50];
+        char pad8[0x40];
+        RE::PlayerCamera* pPlayerCamera; // 48
+        void* unk50;
 		//members
 		std::uint64_t  pitchFlightCameraJoy;               //0x0058
 		std::uint64_t rollFlightCameraJoy;               //0x0060

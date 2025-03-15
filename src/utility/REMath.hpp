@@ -57,6 +57,30 @@ static glm::mat4 remove_y_component(const glm::mat4& mat) {
     return glm::rowMajor4(glm::lookAtLH(Vector3f{}, Vector3f{ forward_dir }, Vector3f(0.0f, 1.0f, 0.0f)));
 }
 
+static glm::mat4 extract_y_component(const glm::mat4& mat) {
+    const auto forward_dir = glm::normalize(Vector3f{ mat[2].x, 0.0f, mat[2].z });
+
+    return glm::lookAtLH(Vector3f{}, Vector3f{ forward_dir }, Vector3f(0.0f, 1.0f, 0.0f));
+}
+
+static float get_yaw(const glm::mat4& mat) {
+    const auto forward_dir = glm::normalize(Vector3f{ mat[2].x, 0.0f, mat[2].z });
+    return glm::atan(forward_dir.x, forward_dir.z);
+}
+
+static const  glm::mat4 permutation_pre = {
+        1, 0, 0, 0,
+        0, 0, 1, 0,
+        0, -1, 0, 0,
+        0, 0,  0, 1
+};
+static const glm::mat4 permutation_post = glm::transpose(permutation_pre);
+
+static glm::mat4 to_havok_space(const glm::mat4& mat) {
+    return permutation_pre * mat * permutation_post;
+}
+
+
 static quat to_quat(const vec3& v) {
     const auto mat = glm::rowMajor4(glm::lookAtLH(Vector3f{0.0f, 0.0f, 0.0f}, v, Vector3f{0.0f, 1.0f, 0.0f}));
 
