@@ -57,6 +57,49 @@ static glm::mat4 remove_y_component(const glm::mat4& mat) {
     return glm::rowMajor4(glm::lookAtLH(Vector3f{}, Vector3f{ forward_dir }, Vector3f(0.0f, 1.0f, 0.0f)));
 }
 
+static glm::mat4 remove_roll(const glm::mat4& mat) {
+    // Extract the forward direction from the matrix
+    const auto forward = glm::normalize(glm::vec3(mat[2]));
+
+    // Fixed world up vector
+    const glm::vec3 world_up(0.0f, 1.0f, 0.0f);
+
+    // Calculate right vector with corrected cross product order
+    const auto right = glm::normalize(glm::cross(world_up, forward));
+
+    // Re-calculate the up vector to ensure orthogonality
+    const auto up = glm::normalize(glm::cross(forward, right));
+
+    // Build rotation matrix from orthonormal basis
+    glm::mat4 result(1.0f);
+    result[0] = glm::vec4(right, 0.0f);
+    result[1] = glm::vec4(up, 0.0f);
+    result[2] = glm::vec4(forward, 0.0f);
+    return result;
+}
+
+static glm::mat4 remove_roll_pitch(const glm::mat4& mat) {
+        // Extract the forward direction from the matrix
+    const auto forward = glm::normalize(glm::vec3(mat[2].x, 0.0f, mat[2].z));
+
+    // Fixed world up vector
+    const glm::vec3 world_up(0.0f, 1.0f, 0.0f);
+
+    // Calculate right vector with corrected cross product order
+    const auto right = glm::normalize(glm::cross(world_up, forward));
+
+    // Re-calculate the up vector to ensure orthogonality
+    const auto up = glm::normalize(glm::cross(forward, right));
+
+    // Build rotation matrix from orthonormal basis
+    glm::mat4 result(1.0f);
+    result[0] = glm::vec4(right, 0.0f);
+    result[1] = glm::vec4(up, 0.0f);
+    result[2] = glm::vec4(forward, 0.0f);
+    return result;
+}
+
+
 static glm::mat4 extract_y_component(const glm::mat4& mat) {
     const auto forward_dir = glm::normalize(Vector3f{ mat[2].x, 0.0f, mat[2].z });
 
@@ -80,6 +123,9 @@ static glm::mat4 to_havok_space(const glm::mat4& mat) {
     return permutation_pre * mat * permutation_post;
 }
 
+static glm::mat4 from_havok_space(const glm::mat4& mat) {
+    return permutation_post * mat * permutation_pre;
+}
 
 static quat to_quat(const vec3& v) {
     const auto mat = glm::rowMajor4(glm::lookAtLH(Vector3f{0.0f, 0.0f, 0.0f}, v, Vector3f{0.0f, 1.0f, 0.0f}));

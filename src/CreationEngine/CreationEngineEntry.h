@@ -29,6 +29,7 @@ private:
     inline static const std::vector<std::string> s_aiming_mode{
       "HeadGun",
       "Free",
+      "HeadGunAlwaysOn",
   };
     const ModCombo::Ptr m_dominant_eye{ ModCombo::create(generate_name("DominantEye"), s_dominant_eye) };
     const ModSlider::Ptr m_head_tracking_multiplier{ ModSlider::create(generate_name("HeadTrackingSensitivity"), 0.5, 2.0, 1.0) };
