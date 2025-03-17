@@ -24,9 +24,10 @@ namespace Steam::MemoryOffsets
     } // namespace Setting
 
     namespace FirstPersonState {
-        inline uintptr_t Update() {
-            static auto val = (uintptr_t)mod + 0x2ac83dc;
-            return val;
+        inline uintptr_t GetRotationQuatV() {
+            static auto pattern = ".?AVFirstPersonState@@";
+            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable", pattern, OffsetsTable::GetOffset(428853)))[13];
+            return addr;
         }
     }
 
@@ -308,6 +309,14 @@ namespace Xbox::MemoryOffsets
             return val;
         }
     } // namespace Setting
+
+    namespace FirstPersonState {
+        inline uintptr_t GetRotationQuatV() {
+            static auto pattern = ".?AVFirstPersonState@@";
+            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable", pattern, OffsetsTable::GetOffset(428853)))[13];
+            return addr;
+        }
+    }
 
     namespace NiNode {
         inline uintptr_t vtable_UpdateWorld() {

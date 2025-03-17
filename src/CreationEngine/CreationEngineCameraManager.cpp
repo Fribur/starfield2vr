@@ -59,6 +59,10 @@ void CreationEngineCameraManager::InstallHooks()
 //    m_onUpdateNiCameraHook = std::make_unique<FunctionHook>(niCameraUpdateVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onUpdateNiCameraDetour));
 //    m_onUpdateNiCameraHook->create();
 
+    REL::Relocation<uintptr_t> onGetCameraRotationAddr{ GameStore::MemoryOffsets::FirstPersonState::GetRotationQuatV() };
+    m_onGetCameraRotationHook = std::make_unique<FunctionHook>(onGetCameraRotationAddr.address(), reinterpret_cast<uintptr_t>(&onFPSGetCameraRotation));
+    m_onGetCameraRotationHook->create();
+
     REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc() };
     m_onSetNimFrustumHook = std::make_unique<FunctionHook>(setNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
     m_onSetNimFrustumHook->create();
@@ -404,4 +408,24 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
             prev_havok_rotation = glm::normalize(glm::quat_cast(glm::extractMatrixRotation(glm::rowMajor4(head_rotation))));
         }
     }
+}
+
+void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *fps, RE::NiQuaternion *quat_out) {
+    static auto instance = CreationEngineCameraManager::Get();
+    static auto original_func = instance->m_onGetCameraRotationHook->get_original<decltype(onFPSGetCameraRotation)>();
+    original_func(fps, quat_out);
+    static auto vr = VR::get();
+    if(!vr->is_hmd_active() || !GameFlow::gStore.internalSettings.decoupledPitch) {
+        return;
+    }
+    if(((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+        return;
+    }
+    auto euler = quat_out->ToEulerAnglesZXY();
+    euler.x = 0.0f;
+    auto new_quat = RE::NiQuaternion::EulerZXY(euler);
+    quat_out->x = new_quat.x;
+    quat_out->y = new_quat.y;
+    quat_out->z = new_quat.z;
+    quat_out->w = new_quat.w;
 }

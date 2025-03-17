@@ -4,6 +4,8 @@
 #include <glm/vec3.hpp>
 #include <shared/sdk/Math.hpp>
 #include <utils/FunctionHook.h>
+#include <RE/F/FirstPersonState.h>
+#include <RE/N/NiQuaternion.h>
 
 struct Matrix6x4f
 {
@@ -114,10 +116,12 @@ private:
     std::unique_ptr<FunctionHook> m_onUpdateCollisionMatrixHook{};
     std::unique_ptr<FunctionHook> m_onSetViewportHook{};
     std::unique_ptr<FunctionHook> m_onSetCameraScissorHook{};
+    std::unique_ptr<FunctionHook> m_onGetCameraRotationHook{};
 //    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
 //    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
     void                          onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
     void                          onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
+    static void onFPSGetCameraRotation(RE::FirstPersonState* fps, RE::NiQuaternion* quat_out);
     unsigned int*                 m_globalFrameCount{};
     float*                        m_globalWorldFov{};
 
