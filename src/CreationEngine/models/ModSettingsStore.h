@@ -26,8 +26,8 @@ namespace GameFlow
             bool preventZoom{false};
             bool alternativeJoyLayout{false};
             float worldScale{1.0f};
-            bool pawnControlRotation{false};
             bool decoupledPitch{false};
+            bool pawnControl{true};
         } internalSettings{};
         DebugData debugData{};
     };

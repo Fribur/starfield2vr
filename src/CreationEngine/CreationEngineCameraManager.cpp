@@ -319,6 +319,9 @@ float CreationEngineCameraManager::get_head_tracking_multiplier() const
     return multiplier * ModConstants::headTrackingMultiplier;
 }
 
+float yaw_offset{0.0f};
+float pitch_offset{0.0f};
+
 void CreationEngineCameraManager::UpdateWorldCamera() {
     static auto vr = VR::get();
     auto worldCamera = CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera;
@@ -336,41 +339,13 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         return;
     }
 
-    static auto prev_havok_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
-    static auto prev_hmd_rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
-
     if(((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
-        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
-
-        auto hmd_transform = vr->get_rotation(0);
+        worldCamera->local.rotate = originalRotation;
+        auto hmd_transform = glm::mat4{1.0f};
+//        hmd_transform[3] = vr->get_rotation(0)[3];
         auto eye = vr->get_current_eye_transform();
         hmd_transform      = hmd_transform * eye;
-
-        auto current_rotation = glm::quat{ glm::rowMajor4(utility::math::to_havok_space(glm::extractMatrixRotation(hmd_transform))) };
-
-        auto diff = rotationDifference(prev_havok_rotation, current_rotation, get_head_tracking_multiplier());
-
-        prev_havok_rotation = current_rotation;
-        if(diff.w < 0) {
-            diff = -diff;
-        }
-        float yaw_diff, pitch_diff, roll_diff;
-        // YXZ, YZX, ZYX, XYZ
-        // ZXY, XZY better
-        glm::extractEulerAngleXZY(glm::mat4_cast(diff), pitch_diff, yaw_diff, roll_diff);
-
-        auto new_yaw = p_player->data.angle.z + yaw_diff + 2.0f * glm::pi<float>();
-        new_yaw = std::fmod(new_yaw, 2.0f * glm::pi<float>());
-        p_player->data.angle.x = p_player->data.angle.x + pitch_diff;
-        p_player->data.angle.z = new_yaw;
-
-        auto offset = glm::mat4_cast(glm::quat{current_rotation.w, current_rotation.x, 0, current_rotation.z});
-        auto transform = glm::mat4_cast(current_rotation) * glm::inverse(offset);
-        transform = glm::rowMajor4(transform);
-
-        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) &transform;
-
-
+        hmd_transform = utility::math::to_havok_space(hmd_transform);
         auto isDominantEye = vr->get_current_render_eye() == (ModConstants::dominantEye == 0 ? VRRuntime::Eye::RIGHT: VRRuntime::Eye::LEFT);
         if(ModConstants::dominantEye == 2) {
             worldCamera->local.translate.x = hmd_transform[3][0];
@@ -385,8 +360,8 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
             auto right_eye_pos = vr->get_runtime()->eyes[1][3];
             auto eye_delta = ModConstants::dominantEye == 0 ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
             worldCamera->local.translate.x = eye_delta.x;
-            worldCamera->local.translate.y = eye_delta.y;
-            worldCamera->local.translate.z = eye_delta.z;
+            worldCamera->local.translate.y = -eye_delta.z;
+            worldCamera->local.translate.z = eye_delta.y;
         }
     } else {
         auto head_rotation = vr->get_transform(0);
@@ -395,37 +370,87 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         head_rotation[3].y -= standing_origin.y;
         head_rotation[3].z -= standing_origin.z;
         auto eye = vr->get_current_eye_transform();
-
         head_rotation = head_rotation * eye;
         head_rotation =  utility::math::to_havok_space(head_rotation);
         worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
         worldCamera->local.translate.x = head_rotation[3][0];
         worldCamera->local.translate.y = head_rotation[3][1];
         worldCamera->local.translate.z = head_rotation[3][2];
-        if(GameFlow::gStore.internalSettings.headAimingAbsolute) {
-            prev_havok_rotation = {1.0f, 0.0f, 0.0f, 0.0f };
-        } else {
-            prev_havok_rotation = glm::normalize(glm::quat_cast(glm::extractMatrixRotation(glm::rowMajor4(head_rotation))));
-        }
     }
 }
+
+
 
 void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *fps, RE::NiQuaternion *quat_out) {
     static auto instance = CreationEngineCameraManager::Get();
     static auto original_func = instance->m_onGetCameraRotationHook->get_original<decltype(onFPSGetCameraRotation)>();
     original_func(fps, quat_out);
     static auto vr = VR::get();
-    if(!vr->is_hmd_active() || !GameFlow::gStore.internalSettings.decoupledPitch) {
+    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
         return;
     }
-    if(((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
-        return;
+    if(!GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+        // order of extraction Pitch->Yaw->Roll (Havok X->Z->Y)
+        auto p_player = CreationEngineSingletonManager::GetPlayerRef();
+
+        RE::NiMatrix3 havok_rotation;
+        quat_out->ToMatrix(havok_rotation);
+        float pitch, yaw, roll;
+        havok_rotation.ToEulerAnglesXYZ(pitch, roll, yaw);
+        if((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) {
+            pitch -= pitch_offset;
+            yaw -= yaw_offset;
+            havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
+
+            auto new_quat = RE::NiQuaternion(havok_rotation);
+            auto current_hmd_rotation = vr->get_rotation(0);
+            auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
+            auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
+            new_quat = new_quat * ni_hmd_rotation;
+
+            auto delta = quat_out->InvertVector() * new_quat;
+            delta.ToMatrix(havok_rotation);
+            float delta_pitch, delta_yaw, delta_roll;
+            havok_rotation.ToEulerAnglesXYZ(delta_pitch, delta_roll, delta_yaw);
+            pitch_offset += delta_pitch;
+            yaw_offset += delta_yaw;
+
+            p_player->data.angle.x = p_player->data.angle.x - delta_pitch;
+            auto corrected_yaw = p_player->data.angle.z - delta_yaw + 2.0f * glm::pi<float>();
+            corrected_yaw = std::fmod(corrected_yaw, 2.0f * glm::pi<float>());
+            p_player->data.angle.z = corrected_yaw;
+            *quat_out = new_quat;
+        } else {
+            if(GameFlow::gStore.internalSettings.pawnControl) {
+                pitch -= pitch_offset;
+                yaw -= yaw_offset;
+                havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
+
+                auto new_quat = RE::NiQuaternion(havok_rotation);
+                auto current_hmd_rotation = vr->get_rotation(0);
+                auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
+                auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
+                new_quat = new_quat * ni_hmd_rotation;
+
+                auto delta = quat_out->InvertVector() * new_quat;
+                delta.ToMatrix(havok_rotation);
+                float delta_pitch, delta_yaw, delta_roll;
+                havok_rotation.ToEulerAnglesXYZ(delta_pitch, delta_roll, delta_yaw);
+//                pitch_offset += delta_pitch;
+                yaw_offset += delta_yaw;
+                auto corrected_yaw = p_player->data.angle.z - delta_yaw + 2.0f * glm::pi<float>();
+                corrected_yaw = std::fmod(corrected_yaw, 2.0f * glm::pi<float>());
+                p_player->data.angle.z = corrected_yaw;
+            }
+            if(GameFlow::gStore.internalSettings.decoupledPitch) {
+                pitch = 0.0f;
+            }
+            havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
+            *quat_out = RE::NiQuaternion(havok_rotation);
+            pitch_offset = 0.0f;
+        }
+    } else {
+        pitch_offset = 0.0f;
+        yaw_offset = 0.0f;
     }
-    auto euler = quat_out->ToEulerAnglesZXY();
-    euler.x = 0.0f;
-    auto new_quat = RE::NiQuaternion::EulerZXY(euler);
-    quat_out->x = new_quat.x;
-    quat_out->y = new_quat.y;
-    quat_out->z = new_quat.z;
-    quat_out->w = new_quat.w;
 }

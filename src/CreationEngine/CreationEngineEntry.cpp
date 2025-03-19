@@ -53,9 +53,9 @@ void CreationEngineEntry::on_draw_ui()
     {
         ModConstants::headTrackingType = m_head_tracking_type->value();
     }
-    if(m_head_tracking_pose->draw("Head Tracking Absolute Pose"))
+    if(m_pawn_control_rotation->draw("Pawn Control Rotation"))
     {
-        GameFlow::gStore.internalSettings.headAimingAbsolute = m_head_tracking_pose->value();
+        GameFlow::gStore.internalSettings.pawnControl = m_pawn_control_rotation->value();
     }
     if(m_decoupled_pitch->draw("Decoupled Pitch"))
     {
@@ -206,7 +206,7 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     ModConstants::headTrackingMultiplier = m_head_tracking_multiplier->value();
     ModConstants::headTrackingType = m_head_tracking_type->value();
     GameFlow::gStore.internalSettings.nvidiaAndTAAfix = m_taa_anf_nvidia_fix->value();
-    GameFlow::gStore.internalSettings.headAimingAbsolute = m_head_tracking_pose->value();
+    GameFlow::gStore.internalSettings.pawnControl = m_pawn_control_rotation->value();
     GameFlow::gStore.internalSettings.preventZoom = m_disable_zoom->value();
     GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
     GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();

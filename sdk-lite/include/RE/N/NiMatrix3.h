@@ -3,6 +3,7 @@
 #include "RE/N/NiPoint4.h"
 #include "RE/N/NiPoint3.h"
 #include <REL/Relocation.h>
+#include <glm/ext/scalar_constants.hpp>
 
 namespace RE
 {
@@ -99,6 +100,93 @@ namespace RE
 			REL::Relocation<func_t> func{ ID::NiMatrix3::ToEulerAnglesXYZ };
 			return func(this, a_x, a_y, a_z);
 		}*/
+
+        static constexpr float HALF_PI = glm::pi<float>() / 2.0f;
+
+        inline bool ToEulerAnglesXYZ(float& arfXAngle, float& arfYAngle, float& arfZAngle) const {
+            arfYAngle = -asin(entry[0][2]);
+            if (arfYAngle < HALF_PI) {
+                if (arfYAngle > -HALF_PI) {
+                    arfXAngle = -atan2(-entry[1][2], entry[2][2]);
+                    arfZAngle = -atan2(-entry[0][1], entry[0][0]);
+                    return true;
+                }
+                else {
+                    // WARNING.  Not a unique solution.
+                    float fRmY = atan2(entry[1][0], entry[1][1]);
+                    arfZAngle = 0.0f;  // any angle works
+                    arfXAngle = fRmY - arfZAngle;
+                    return false;
+                }
+            }
+            else {
+                // WARNING.  Not a unique solution.
+                float fRpY = atan2(entry[1][0], entry[1][1]);
+                arfZAngle = 0.0f;  // any angle works
+                arfXAngle = arfZAngle - fRpY;
+                return false;
+            }
+        }
+
+        inline void FromEulerAnglesXYZ(float fXAngle, float fYAngle, float fZAngle) {
+            NiMatrix3 kXRot, kYRot, kZRot;
+            kXRot.MakeXRotation(fXAngle);
+            kYRot.MakeYRotation(fYAngle);
+            kZRot.MakeZRotation(fZAngle);
+            *this = kXRot * (kYRot * kZRot);
+        }
+
+
+        inline void MakeXRotation(float fAngle) {
+
+            float sn = std::sin(fAngle);
+            float cs = std::cos(fAngle);
+
+            entry[0][0] = 1.0f;
+            entry[0][1] = 0.0f;
+            entry[0][2] = 0.0f;
+            entry[1][0] = 0.0f;
+            entry[1][1] = cs;
+            entry[1][2] = sn;
+            entry[2][0] = 0.0f;
+            entry[2][1] = -sn;
+            entry[2][2] = cs;
+
+        }
+
+        inline void MakeYRotation(float fAngle) {
+
+            float sn = std::sin(fAngle);
+            float cs = std::cos(fAngle);
+
+            entry[0][0] = cs;
+            entry[0][1] = 0.0f;
+            entry[0][2] = -sn;
+            entry[1][0] = 0.0f;
+            entry[1][1] = 1.0f;
+            entry[1][2] = 0.0f;
+            entry[2][0] = sn;
+            entry[2][1] = 0.0f;
+            entry[2][2] = cs;
+
+        }
+
+        inline void MakeZRotation(float fAngle) {
+
+            float sn = std::sin(fAngle);
+            float cs = std::cos(fAngle);
+
+            entry[0][0] = cs;
+            entry[0][1] = sn;
+            entry[0][2] = 0.0f;
+            entry[1][0] = -sn;
+            entry[1][1] = cs;
+            entry[1][2] = 0.0f;
+            entry[2][0] = 0.0f;
+            entry[2][1] = 0.0f;
+            entry[2][2] = 1.0f;
+
+        }
 
 
 		NiMatrix3 Transpose() const

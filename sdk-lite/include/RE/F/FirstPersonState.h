@@ -1,5 +1,7 @@
 #pragma once
 
+#include <RE/N/NiQuaternion.h>
+
 namespace RE
 {
 
@@ -26,10 +28,10 @@ namespace RE
 		std::uint64_t  N000006EE;               //0x0090
 		std::uint32_t  N000006EF;               //0x0098
 		std::uint32_t  _pad3;                   //0x009C
-		NiCamera* pNiCamera2;              //0x00A0
+		NiCamera* cameraRoot;              //0x00A0 worldRoot
 		NiNode*   pNiNode;                 //0x00A8
 		NiNode*   pNiNode2;                //0x00B0
-		std::uint64_t  N000006F3;               //0x00B8
+		NiPoint3* cameraOffset;               //0x00B8 ->x yaw, -> y pitch
 		float     cameraPitch2Multiplier;  //0x00C0 //multiplier for camera_pitch
 		float     N00000812;               //0x00C4
 		float     camera_pitch;            //0x00C8 -120 to 120
