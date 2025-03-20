@@ -63,6 +63,10 @@ void CreationEngineCameraManager::InstallHooks()
     m_onGetCameraRotationHook = std::make_unique<FunctionHook>(onGetCameraRotationAddr.address(), reinterpret_cast<uintptr_t>(&onFPSGetCameraRotation));
     m_onGetCameraRotationHook->create();
 
+//    REL::Relocation<uintptr_t> onGetCameraLocationAddr{ GameStore::MemoryOffsets::FirstPersonState::GetLocationV() };
+//    m_onGetCameraLocationHook = std::make_unique<FunctionHook>(onGetCameraLocationAddr.address(), reinterpret_cast<uintptr_t>(&onFPSGetCameraLocation));
+//    m_onGetCameraLocationHook->create();
+
     REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc() };
     m_onSetNimFrustumHook = std::make_unique<FunctionHook>(setNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
     m_onSetNimFrustumHook->create();
@@ -340,29 +344,18 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
     }
 
     if(((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
-        worldCamera->local.rotate = originalRotation;
-        auto hmd_transform = glm::mat4{1.0f};
-//        hmd_transform[3] = vr->get_rotation(0)[3];
+        auto hmd_transform = vr->get_transform(0);
+        auto standing_origin = vr->get_standing_origin();
+        hmd_transform[3].x -= standing_origin.x;
+        hmd_transform[3].y -= standing_origin.y;
+        hmd_transform[3].z -= standing_origin.z;
         auto eye = vr->get_current_eye_transform();
-        hmd_transform      = hmd_transform * eye;
+        hmd_transform      = glm::inverse(glm::extractMatrixRotation(hmd_transform)) * hmd_transform * eye;
         hmd_transform = utility::math::to_havok_space(hmd_transform);
-        auto isDominantEye = vr->get_current_render_eye() == (ModConstants::dominantEye == 0 ? VRRuntime::Eye::RIGHT: VRRuntime::Eye::LEFT);
-        if(ModConstants::dominantEye == 2) {
-            worldCamera->local.translate.x = hmd_transform[3][0];
-            worldCamera->local.translate.y = hmd_transform[3][1];
-            worldCamera->local.translate.z = hmd_transform[3][2];
-        } else if (isDominantEye) {
-            worldCamera->local.translate.x = 0.0f;
-            worldCamera->local.translate.y = 0.0f;
-            worldCamera->local.translate.z = 0.0f;
-        } else {
-            auto left_eye_pos = vr->get_runtime()->eyes[0][3];
-            auto right_eye_pos = vr->get_runtime()->eyes[1][3];
-            auto eye_delta = ModConstants::dominantEye == 0 ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
-            worldCamera->local.translate.x = eye_delta.x;
-            worldCamera->local.translate.y = -eye_delta.z;
-            worldCamera->local.translate.z = eye_delta.y;
-        }
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & hmd_transform;
+        worldCamera->local.translate.x = hmd_transform[3][0];
+        worldCamera->local.translate.y = hmd_transform[3][1];
+        worldCamera->local.translate.z = hmd_transform[3][2];
     } else {
         auto head_rotation = vr->get_transform(0);
         auto standing_origin = vr->get_standing_origin();
@@ -387,6 +380,8 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
     original_func(fps, quat_out);
     static auto vr = VR::get();
     if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
+        pitch_offset = 0.0f;
+        yaw_offset = 0.0f;
         return;
     }
     if(!GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
@@ -454,3 +449,45 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
         yaw_offset = 0.0f;
     }
 }
+//
+//uintptr_t CreationEngineCameraManager::onFPSGetCameraLocation(RE::FirstPersonState *fps, RE::NiPoint3 *point_out) {
+//    static auto instance = CreationEngineCameraManager::Get();
+//    static auto original_func = instance->m_onGetCameraLocationHook->get_original<decltype(onFPSGetCameraLocation)>();
+//    auto result = original_func(fps, point_out);
+//    static auto vr = VR::get();
+//    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
+//        return result;
+//    }
+//
+//    if(GameFlow::isImmovable() || GameFlow::isControlledByAI()) {
+//        return result;
+//    }
+//    if((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) {
+//        static auto get_rotation_func = instance->m_onGetCameraRotationHook->get_original<decltype(onFPSGetCameraRotation)>();
+//        RE::NiQuaternion quat_out;
+//        get_rotation_func(fps, &quat_out);
+//
+//        RE::NiMatrix3 havok_rotation;
+//        quat_out.ToMatrix(havok_rotation);
+//        float pitch, yaw, roll;
+//        havok_rotation.ToEulerAnglesXYZ(pitch, roll, yaw);
+//        pitch -= pitch_offset;
+//        yaw -= yaw_offset;
+//        havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
+//
+//        auto quat_rel =  RE::NiQuaternion(havok_rotation) * quat_out.Normalize().InvertVector();
+//        quat_out = RE::NiQuaternion(havok_rotation);
+//
+//        auto new_point = quat_rel * *point_out;
+//        auto current_hmd_rotation = vr->get_transform(0);
+//        current_hmd_rotation      =  current_hmd_rotation;
+//        auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(glm::extractMatrixRotation(current_hmd_rotation))));
+//        auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
+////        quat_out = quat_out * ni_hmd_rotation;
+//        auto offset = current_hmd_rotation[3];
+//        //offset -= vr->get_standing_origin();
+//
+//        *point_out = quat_out * RE::NiPoint3(offset.x, -offset.z, offset.y) + new_point;
+//    }
+//    return result;
+//}

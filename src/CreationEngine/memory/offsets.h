@@ -26,7 +26,13 @@ namespace Steam::MemoryOffsets
     namespace FirstPersonState {
         inline uintptr_t GetRotationQuatV() {
             static auto pattern = ".?AVFirstPersonState@@";
-            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable", pattern, OffsetsTable::GetOffset(428853)))[13];
+            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable[13]", pattern, OffsetsTable::GetOffset(428853)))[13];
+            return addr;
+        }
+
+        inline uintptr_t GetLocationV() {
+            static auto pattern = ".?AVFirstPersonState@@";
+            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable[14]", pattern, OffsetsTable::GetOffset(165928)))[14];
             return addr;
         }
     }
@@ -314,6 +320,12 @@ namespace Xbox::MemoryOffsets
         inline uintptr_t GetRotationQuatV() {
             static auto pattern = ".?AVFirstPersonState@@";
             static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable", pattern, OffsetsTable::GetOffset(428853)))[13];
+            return addr;
+        }
+
+        inline uintptr_t GetLocationV() {
+            static auto pattern = ".?AVFirstPersonState@@";
+            static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable[14]", pattern, OffsetsTable::GetOffset(165928)))[14];
             return addr;
         }
     }

@@ -117,11 +117,13 @@ private:
     std::unique_ptr<FunctionHook> m_onSetViewportHook{};
     std::unique_ptr<FunctionHook> m_onSetCameraScissorHook{};
     std::unique_ptr<FunctionHook> m_onGetCameraRotationHook{};
+//    std::unique_ptr<FunctionHook> m_onGetCameraLocationHook{};
 //    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
 //    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
     void                          onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
     void                          onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
     static void onFPSGetCameraRotation(RE::FirstPersonState* fps, RE::NiQuaternion* quat_out);
+//    static uintptr_t onFPSGetCameraLocation(RE::FirstPersonState* fps, RE::NiPoint3* point_out);
     unsigned int*                 m_globalFrameCount{};
     float*                        m_globalWorldFov{};
 
