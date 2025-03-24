@@ -38,6 +38,17 @@ namespace RE
 			result.translate = translate + (rotate * a_rhs.translate) * scale;
 			return result;
 		}
+/*
+        typedef RE::NiTransform* (*NiTransformMulfn)(const RE::NiTransform* parent, RE::NiTransform& out, const RE::NiTransform& local);
+
+        NiTransform operator*(const NiTransform& a_rhs) const
+        {
+            static auto NiTransformMul = (NiTransformMulfn)((uintptr_t )MemoryScan::mod + 0x127461c);
+            NiTransform result;
+            NiTransformMul(this, result, a_rhs);
+            return result;
+        }
+*/
 
 		void operator*=(const NiTransform& a_rhs)
 		{

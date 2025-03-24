@@ -17,28 +17,20 @@
 #include <mods/VR.hpp>
 #include <utility/REMath.hpp>
 
-/*
 
-void onUpdateNiCameraDetour(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
-{
-    CreationEngineCameraManager::Get()->onUpdateNiCamera(a_camera, a_data);
-}
-*/
-
-void onSetNimFrustumDetour(RE::NiCamera* camera, RE::NiFrustum* frustum)
-{
+void onSetNimFrustumDetour(RE::NiCamera *camera, RE::NiFrustum *frustum) {
     CreationEngineCameraManager::Get()->onSetNimFrustum(camera, frustum);
 }
 
-void onCalcNimFrustumDetour(RE::NiCamera* camera, float fov, float aspectRatio, float nearDist, float farDist, char lodAdjust)
-{
+void onCalcNimFrustumDetour(RE::NiCamera *camera, float fov, float aspectRatio, float nearDist, float farDist,
+                            char lodAdjust) {
     CreationEngineCameraManager::Get()->onCalcNiFrustum(camera, fov, aspectRatio, nearDist, farDist, lodAdjust);
 }
 
-void onScaleformSetViewPortDetour(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
-{
+void onScaleformSetViewPortDetour(uintptr_t *thisMovie, Scaleform::Gfx::Viewport *viewport) {
     CreationEngineCameraManager::Get()->onScaleformSetViewPort(thisMovie, viewport);
 }
+
 /*
 
 void onScaleformMovieSetProjectionMatrix3DDetour(uintptr_t* thisMovie, Matrix4x4f& matrix)
@@ -47,180 +39,129 @@ void onScaleformMovieSetProjectionMatrix3DDetour(uintptr_t* thisMovie, Matrix4x4
 }
 */
 
-bool isValidCamera(RE::NiCamera* pCamera)
-{
+bool isValidCamera(RE::NiCamera *pCamera) {
     static auto sceneGraphRoot = CreationEngineSingletonManager::GetSceneGraphRoot();
-    return pCamera == sceneGraphRoot->worldCamera || pCamera == sceneGraphRoot->starfieldScene.pStarFieldCamera || sceneGraphRoot->starfieldScene.pGalaxyCamera == pCamera;
+    return pCamera == sceneGraphRoot->worldCamera || pCamera == sceneGraphRoot->starfieldScene.pStarFieldCamera ||
+           sceneGraphRoot->starfieldScene.pGalaxyCamera == pCamera;
 }
 
-void CreationEngineCameraManager::InstallHooks()
-{
-//    REL::Relocation<uintptr_t> niCameraUpdateVFuncAddr{ GameStore::MemoryOffsets::NiCamera::UpdateWorldVfunc() };
-//    m_onUpdateNiCameraHook = std::make_unique<FunctionHook>(niCameraUpdateVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onUpdateNiCameraDetour));
-//    m_onUpdateNiCameraHook->create();
+void CreationEngineCameraManager::InstallHooks() {
+    REL::Relocation<uintptr_t> onNiAVObjectUpdateWorldAddr{GameStore::MemoryOffsets::BSFadeNode::vtable_UpdateWorld()};
+    m_onNiAVObjectUpdateWorldHook = std::make_unique<FunctionHook>(onNiAVObjectUpdateWorldAddr.address(),
+                                                                   reinterpret_cast<uintptr_t>(&onNiAVObjectUpdateWorld));
+    m_onNiAVObjectUpdateWorldHook->create();
 
     REL::Relocation<uintptr_t> onGetCameraRotationAddr{ GameStore::MemoryOffsets::FirstPersonState::GetRotationQuatV() };
     m_onGetCameraRotationHook = std::make_unique<FunctionHook>(onGetCameraRotationAddr.address(), reinterpret_cast<uintptr_t>(&onFPSGetCameraRotation));
     m_onGetCameraRotationHook->create();
 
-//    REL::Relocation<uintptr_t> onGetCameraLocationAddr{ GameStore::MemoryOffsets::FirstPersonState::GetLocationV() };
-//    m_onGetCameraLocationHook = std::make_unique<FunctionHook>(onGetCameraLocationAddr.address(), reinterpret_cast<uintptr_t>(&onFPSGetCameraLocation));
-//    m_onGetCameraLocationHook->create();
 
-    REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc() };
-    m_onSetNimFrustumHook = std::make_unique<FunctionHook>(setNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
+    REL::Relocation<uintptr_t> setNimFrustumVFuncAddr{GameStore::MemoryOffsets::NiCamera::SetFrustumVfunc()};
+    m_onSetNimFrustumHook = std::make_unique<FunctionHook>(setNimFrustumVFuncAddr.address(),
+                                                           reinterpret_cast<uintptr_t>(&onSetNimFrustumDetour));
     m_onSetNimFrustumHook->create();
 
-    REL::Relocation<uintptr_t> calcNimFrustumVFuncAddr{ GameStore::MemoryOffsets::NiCamera::CalcFrustumVfunc() };
-    m_onCalcNimFrustumHook = std::make_unique<FunctionHook>(calcNimFrustumVFuncAddr.address(), reinterpret_cast<uintptr_t>(&onCalcNimFrustumDetour));
+    REL::Relocation<uintptr_t> calcNimFrustumVFuncAddr{GameStore::MemoryOffsets::NiCamera::CalcFrustumVfunc()};
+    m_onCalcNimFrustumHook = std::make_unique<FunctionHook>(calcNimFrustumVFuncAddr.address(),
+                                                            reinterpret_cast<uintptr_t>(&onCalcNimFrustumDetour));
     m_onCalcNimFrustumHook->create();
 
-    REL::Relocation<uintptr_t> scaleformSetViewPortAddr{ GameStore::MemoryOffsets::Scaleform::Movie::SetViewportVFunc() };
-    m_onScaleformSetViewPortHook = std::make_unique<FunctionHook>(scaleformSetViewPortAddr.address(), reinterpret_cast<uintptr_t>(&onScaleformSetViewPortDetour));
+    REL::Relocation<uintptr_t> scaleformSetViewPortAddr{GameStore::MemoryOffsets::Scaleform::Movie::SetViewportVFunc()};
+    m_onScaleformSetViewPortHook = std::make_unique<FunctionHook>(scaleformSetViewPortAddr.address(),
+                                                                  reinterpret_cast<uintptr_t>(&onScaleformSetViewPortDetour));
     m_onScaleformSetViewPortHook->create();
 }
-/*
-void CreationEngineCameraManager::onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
-{
-//    UpdateCamera(a_camera, a_data);
-    using func_t              = decltype(onUpdateNiCameraDetour);
-    static auto original_func = m_onUpdateNiCameraHook->get_original<func_t>();
-    original_func(a_camera, a_data);
-}*/
 
-glm::quat rotationDifference(const glm::quat& q1, const glm::quat& q2, float animationTime = 1.0f) {
-    // Calculate the relative rotation
-    auto endRotation = glm::slerp(q1, q2, animationTime);
-    //TODO try switch
-    glm::quat relativeRotation = endRotation * glm::inverse(q1);
+float yaw_offset{0.0f};
 
-    // Ensure the rotation is along the shortest arc
-    if (relativeRotation.w < 0) {
-        relativeRotation = -relativeRotation;
+RE::NiAVObject *getCameraRootNode() {
+    auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
+
+    if (!playerCamera || !playerCamera->IsInFirstPerson()) {
+        return nullptr;
+    }
+    RE::NiAVObject *a_camera = playerCamera->pFirstPersonModeState->cameraRoot;
+    while (a_camera) {
+        if (a_camera->name == "Root") {
+            return a_camera;
+        }
+        a_camera = a_camera->parent;
+    }
+    return nullptr;
+}
+
+void UpdateMesh(RE::NiAVObject* camera) {
+    if (GameFlow::isImmovable() || GameFlow::isControlledByAI()) {
+        return;
     }
 
-    return relativeRotation;
-}
-/*
-glm::quat extractZRotation(const glm::quat& q) {
-    // Convert quaternion to rotation matrix
-    glm::mat4 rotMat = glm::mat4_cast(q);
-
-    // Extract the Z-axis rotation angle
-    float angle = std::atan2(rotMat[0][1], rotMat[0][0]);
-
-    // Create a new quaternion with only Z-axis rotation
-    return glm::angleAxis(angle, glm::vec3(0, 0, 1));
-}
-
-
-void CreationEngineCameraManager::UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data)
-{
-    //    && a_camera != CreationEngineGameModule::GetSceneGraphRoot()->starfieldScene.pStarFieldCamera
-    if (a_camera == nullptr || a_camera != CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera) {
+    if(GameFlow::gStore.internalSettings.decoupledPitch && !(ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights())) {
         return;
     }
     static auto vr = VR::get();
+    auto camera_quat = RE::NiQuaternion(camera->world.rotate);
+    auto glm_camera_quat = glm::normalize(glm::quat(camera_quat.w, camera_quat.x, camera_quat.y, camera_quat.z));
 
-    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
-        return;
-    }
-    //    spdlog::info("Updating world  camera fc[{}]", vr->m_frame_count);
-
-    bool  isLeftEye    = vr->get_current_render_eye() == VRRuntime::Eye::LEFT;
-    auto  playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
-    bool  isHeadGun    = ModConstants::headTrackingType == 0 && playerCamera->IsInFirstPerson() && playerCamera->pFirstPersonModeState->pitchFlightCameraJoy == 0;
-
-    if (isHeadGun) {
-        auto left_eye_pos = vr->get_runtime()->eyes[0][3];
-        auto right_eye_pos = vr->get_runtime()->eyes[1][3];
-        auto eye_delta = isLeftEye ? left_eye_pos - right_eye_pos : right_eye_pos - left_eye_pos;
-        if (ModConstants::dominantEye == isLeftEye) {
-            a_camera->local.translate.x = 0.0f;
-            a_camera->local.translate.y = 0.0f;
-            a_camera->local.translate.z = 0.0f;
-        } else {
-            a_camera->local.translate.x = eye_delta.x;
-            a_camera->local.translate.y = eye_delta.y;
-            a_camera->local.translate.z = eye_delta.z;
+    auto current_hmd_rotation = vr->get_rotation(0);
+    auto hmd_rotation_quat = glm::normalize(
+            glm::quat_cast(current_hmd_rotation));
+    hmd_rotation_quat = {hmd_rotation_quat.w, hmd_rotation_quat.x, -hmd_rotation_quat.z, hmd_rotation_quat.y};
+    auto quat_out = glm_camera_quat;
+    {
+        if (GameFlow::gStore.internalSettings.pawnControl) {
+            quat_out = glm::rotate(quat_out, -yaw_offset, glm::vec3{0.0f, 0.0f, 1.0f});
         }
-    }
-    else {
-        auto eye_pos                = vr->get_runtime()->eyes[isLeftEye ? 0 : 1][3];
-        a_camera->local.translate.x = eye_pos.x;
-        a_camera->local.translate.y = eye_pos.y;
-        a_camera->local.translate.z = eye_pos.z;
-    }
-
-    // TODO move update matrices logic to VR runtime so matrix calculation would be done once and only every other frame
-    if (!isLeftEye || ModConstants::cameraShake) {
-        return;
-    }
-
-    auto       head_rotation        = vr->get_rotation(0);
-    auto       hmd_rotation         = glm::quat{ glm::extractMatrixRotation(head_rotation) };
-    auto       rot_offset           = vr->get_rotation_offset();
-    const auto current_hmd_rotation = glm::normalize(rot_offset * hmd_rotation);
-
-    // TODO detect if person is in space or ship
-    if (isHeadGun) {
-        //TODO possible it is better to move this logic before camera update I suspect it has one frame off
-        auto player = CreationEngineSingletonManager::GetPlayerRef();
-        //        RE::TransformsManager* transformsManager = RE::TransformsManager::GetSingleton();
-        auto pitch_multiplier = get_head_tracking_multiplier();
-        auto rotation_diff = rotationDifference(prev_quat, current_hmd_rotation, pitch_multiplier);
-        auto euler_diff    = euler_angles_from_steamvr(rotation_diff);
-        //TODO use lerp insead of multiplication
-        player->data.angle.x  = player->data.angle.x - euler_diff.x;
-        float yaw             = player->data.angle.z + euler_diff.y + 2.0f * glm::pi<float>();
-        player->data.angle.z  = std::fmod(yaw, 2.0f * glm::pi<float>());
-        prev_quat             = current_hmd_rotation;
-        auto roll_quat        = extractZRotation(current_hmd_rotation);
-        auto left_handed_coord      = glm::quat(-roll_quat.w, roll_quat.x, -roll_quat.z, roll_quat.y);
-        auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
-        if (!ModConstants::preventCameraRoll) {
-            auto mat_cast = (RE::NiMatrix3*)&rot;
-            rotateCamera(a_camera, mat_cast);
-        }
-    }
-    else {
-        //        auto rot      = glm::inverse(glm::eulerAngleXYZ(-euler.x, -euler.z, euler.y));
-        auto left_handed_coord      = glm::quat(-current_hmd_rotation.w, current_hmd_rotation.x, -current_hmd_rotation.z, current_hmd_rotation.y);
-        auto rot                    = glm::transpose(glm::mat4_cast(left_handed_coord));
-        auto mat_cast               = (RE::NiMatrix3*)&rot;
-        rotateCamera(a_camera, mat_cast);
+        quat_out = quat_out * hmd_rotation_quat;
+        camera_quat = RE::NiQuaternion(quat_out.w, quat_out.x, quat_out.y, quat_out.z);
+        camera_quat.ToMatrix(camera->world.rotate);
     }
 }
-*/
 
-void CreationEngineCameraManager::onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
-{
-    using func_t              = decltype(onScaleformSetViewPortDetour);
+void CreationEngineCameraManager::onNiAVObjectUpdateWorld(RE::NiAVObject *obj, RE::NiUpdateData *a_data) {
+    static auto instance = CreationEngineCameraManager::Get();
+    using func_t = decltype(onNiAVObjectUpdateWorld);
+    static auto original_func = instance->m_onNiAVObjectUpdateWorldHook->get_original<func_t>();
+    static auto vr = VR::get();
+    if (vr->is_hmd_active() && !GameFlow::shouldShowFlatScreen()) {
+        auto camera_root = getCameraRootNode();
+        if (obj->parent && camera_root && camera_root == obj->parent) {
+            original_func(obj, a_data);
+            if (!std::strstr(obj->name.c_str(), "Camera")) {
+                UpdateMesh(obj);
+            }
+            return;
+        }
+    }
+    original_func(obj, a_data);
+}
+
+void CreationEngineCameraManager::onScaleformSetViewPort(uintptr_t *thisMovie, Scaleform::Gfx::Viewport *viewport) {
+    using func_t = decltype(onScaleformSetViewPortDetour);
     static auto original_func = m_onScaleformSetViewPortHook->get_original<func_t>();
     onScaleformSetViewPortInternal(thisMovie, viewport);
     original_func(thisMovie, viewport);
 }
 
-void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport)
-{
+void
+CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t *thisMovie, Scaleform::Gfx::Viewport *viewport) {
 
     static auto vr = VR::get();
-    auto  cc                = reinterpret_cast<RE::Scaleform::GFx::MovieImpl*>(thisMovie);
-    auto  file_url          = cc->GetMovieDef()->GetFileURL();
+    auto cc = reinterpret_cast<RE::Scaleform::GFx::MovieImpl *>(thisMovie);
+    auto file_url = cc->GetMovieDef()->GetFileURL();
     GameFlow::renderMenu(file_url);
     if (GameFlow::shouldShowFlatScreen() || !vr->is_hmd_active()) {
         return;
     }
-    auto backbuffer_size              = vr->get_backbuffer_size();
-    auto viewport_buffer_width  = viewport->bufferWidth;
+    auto backbuffer_size = vr->get_backbuffer_size();
+    auto viewport_buffer_width = viewport->bufferWidth;
     auto viewport_buffer_height = viewport->bufferHeight;
 
-    int   offset_left       = 0;
-    int   offset_top        = 0;
+    int offset_left = 0;
+    int offset_top = 0;
 
     auto settings = GameFlow::getMenuSettings(file_url);
 
-    auto width_multiplier  = settings.hud_scale;
+    auto width_multiplier = settings.hud_scale;
     auto height_multiplier = settings.hud_scale;
 
     // Implement offset based on dominant eye and menu-specific offset_value
@@ -228,51 +169,34 @@ void CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t* this
     if (ModConstants::dominantEye == 1) {
         // Dominant eye is right
         offset_left = (current_eye == VRRuntime::Eye::RIGHT) ? -settings.perspective : 0;
-    }
-    else {
+    } else {
         // Dominant eye is left
         offset_left = (current_eye == VRRuntime::Eye::LEFT) ? settings.perspective : 0;
     }
 
-    auto visible_width  = std::min((int)((float)backbuffer_size[0] * width_multiplier), viewport_buffer_width);
-    auto visible_height = std::min((int)((float)backbuffer_size[1] * height_multiplier), viewport_buffer_height);
-    viewport->width     = visible_width;
-    viewport->height    = visible_height;
-    viewport->left      = (int)(viewport_buffer_width - visible_width) / 2 + offset_left;
-    viewport->top       = (int)(viewport_buffer_height - visible_height) / 2 + offset_top;
+    auto visible_width = std::min((int) ((float) backbuffer_size[0] * width_multiplier), viewport_buffer_width);
+    auto visible_height = std::min((int) ((float) backbuffer_size[1] * height_multiplier), viewport_buffer_height);
+    viewport->width = visible_width;
+    viewport->height = visible_height;
+    viewport->left = (int) (viewport_buffer_width - visible_width) / 2 + offset_left;
+    viewport->top = (int) (viewport_buffer_height - visible_height) / 2 + offset_top;
 }
-/*
 
-void CreationEngineCameraManager::rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot)
-{
-    // TODO perhaps need to move this logic somewhere else
-    if (originalRotations.find((uintptr_t)a_camera) == originalRotations.end()) {
-        originalRotations[(uintptr_t)a_camera] = a_camera->local.rotate;
-    }
-
-    auto originalRotation  = originalRotations[(uintptr_t)a_camera];
-    a_camera->local.rotate = originalRotation * *a_rot;
-}
-*/
-
-void CreationEngineCameraManager::onSetNimFrustum(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum)
-{
-    using func_t              = decltype(onSetNimFrustumDetour);
+void CreationEngineCameraManager::onSetNimFrustum(RE::NiCamera *pCamera, RE::NiFrustum *pFrustum) {
+    using func_t = decltype(onSetNimFrustumDetour);
     static auto original_func = m_onSetNimFrustumHook->get_original<func_t>();
     onSetNiFrustumInternal(pCamera, pFrustum);
     original_func(pCamera, pFrustum);
 }
 
-void aiming_adjustments(Vector4f& frustum, float fov_adjustment)
-{
+void aiming_adjustments(Vector4f &frustum, float fov_adjustment) {
     frustum[0] = std::tanf(std::atanf(frustum[0]) - fov_adjustment);
     frustum[1] = std::tanf(std::atanf(frustum[1]) + fov_adjustment);
     frustum[2] = std::tanf(std::atanf(frustum[2]) + fov_adjustment);
     frustum[3] = std::tanf(std::atanf(frustum[3]) - fov_adjustment);
 }
 
-void CreationEngineCameraManager::onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum)
-{
+void CreationEngineCameraManager::onSetNiFrustumInternal(RE::NiCamera *pCamera, RE::NiFrustum *pFrustum) {
     if (!isValidCamera(pCamera)) {
         return;
     }
@@ -280,21 +204,21 @@ void CreationEngineCameraManager::onSetNiFrustumInternal(RE::NiCamera* pCamera, 
     if (!vr->is_hmd_active()) {
         return;
     }
-    auto     eye             = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
-    auto     runtime         = vr->get_runtime();
-    Vector4f frustum         = runtime->frustums[eye];
+    auto eye = vr->get_current_render_eye() == VRRuntime::Eye::LEFT ? 0 : 1;
+    auto runtime = vr->get_runtime();
+    Vector4f frustum = runtime->frustums[eye];
     aiming_adjustments(frustum, get_fov_adjustment());
-    pFrustum->left   = frustum[0];
-    pFrustum->right  = frustum[1];
-    pFrustum->top    = frustum[2];
+    pFrustum->left = frustum[0];
+    pFrustum->right = frustum[1];
+    pFrustum->top = frustum[2];
     pFrustum->bottom = frustum[3];
 }
 
-void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float fov, float aspectRatio, float nearz, float farz, char lodAdjust)
-{
-    using func_t              = decltype(onCalcNimFrustumDetour);
+void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera *pCamera, float fov, float aspectRatio, float nearz,
+                                                  float farz, char lodAdjust) {
+    using func_t = decltype(onCalcNimFrustumDetour);
     static auto original_func = m_onCalcNimFrustumHook->get_original<func_t>();
-    auto        playerCamera  = CreationEngineSingletonManager::GetPlayerCameraSingleton();
+    auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
 
     //    spdlog::info("Setting frustum for camera [{}] {} camera[{} {}] setFov[{}]", fmt::ptr(pCamera), pCamera->name, playerCamera->fov, playerCamera->notViewFov, fov);
     static auto vr = VR::get();
@@ -302,35 +226,31 @@ void CreationEngineCameraManager::onCalcNiFrustum(RE::NiCamera* pCamera, float f
     if (vr->is_hmd_active() && CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera == pCamera) {
         //        fov = fov + Constants::lodAdjustFov;
         m_fov_adjust = fov - playerCamera->fov;
-        vr->m_nearz  = nearz;
-        vr->m_farz   = farz;
+        vr->m_nearz = nearz;
+        vr->m_farz = farz;
     }
     original_func(pCamera, fov, aspectRatio, nearz, farz, lodAdjust);
 }
 
-float CreationEngineCameraManager::get_fov_adjustment() const
-{
-    if(GameFlow::gStore.internalSettings.preventZoom) {
+float CreationEngineCameraManager::get_fov_adjustment() const {
+    if (GameFlow::gStore.internalSettings.preventZoom) {
         return 0.0f;
     }
     return tanf((m_fov_adjust * ModConstants::DEG_TO_RAD) / 2.0f);
 }
 
-float CreationEngineCameraManager::get_head_tracking_multiplier() const
-{
+float CreationEngineCameraManager::get_head_tracking_multiplier() const {
     static auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
     auto multiplier = (playerCamera->fov + m_fov_adjust) / playerCamera->fov;
     return multiplier * ModConstants::headTrackingMultiplier;
 }
 
-float yaw_offset{0.0f};
-float pitch_offset{0.0f};
 
 void CreationEngineCameraManager::UpdateWorldCamera() {
     static auto vr = VR::get();
     auto worldCamera = CreationEngineSingletonManager::GetSceneGraphRoot()->worldCamera;
 
-    if(!worldCamera) {
+    if (!worldCamera) {
         return;
     }
 
@@ -343,7 +263,7 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         return;
     }
 
-    if(((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) && !GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+    if(!GameFlow::isImmovable() && !GameFlow::isControlledByAI() && GameFlow::isInFirstPerson()) {
         auto hmd_transform = vr->get_transform(0);
         auto standing_origin = vr->get_standing_origin();
         hmd_transform[3].x -= standing_origin.x;
@@ -364,14 +284,13 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
         head_rotation[3].z -= standing_origin.z;
         auto eye = vr->get_current_eye_transform();
         head_rotation = head_rotation * eye;
-        head_rotation =  utility::math::to_havok_space(head_rotation);
-        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & head_rotation;
+        head_rotation = utility::math::to_havok_space(head_rotation);
+        worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3 *) &head_rotation;
         worldCamera->local.translate.x = head_rotation[3][0];
         worldCamera->local.translate.y = head_rotation[3][1];
         worldCamera->local.translate.z = head_rotation[3][2];
     }
 }
-
 
 
 void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *fps, RE::NiQuaternion *quat_out) {
@@ -380,11 +299,10 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
     original_func(fps, quat_out);
     static auto vr = VR::get();
     if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
-        pitch_offset = 0.0f;
         yaw_offset = 0.0f;
         return;
     }
-    if(!GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
+    if (!GameFlow::isImmovable() && !GameFlow::isControlledByAI()) {
         // order of extraction Pitch->Yaw->Roll (Havok X->Z->Y)
         auto p_player = CreationEngineSingletonManager::GetPlayerRef();
 
@@ -392,102 +310,35 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
         quat_out->ToMatrix(havok_rotation);
         float pitch, yaw, roll;
         havok_rotation.ToEulerAnglesXYZ(pitch, roll, yaw);
-        if((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) {
-            pitch -= pitch_offset;
-            yaw -= yaw_offset;
-            havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
 
-            auto new_quat = RE::NiQuaternion(havok_rotation);
-            auto current_hmd_rotation = vr->get_rotation(0);
-            auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
-            auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
-            new_quat = new_quat * ni_hmd_rotation;
-
-            auto delta = quat_out->InvertVector() * new_quat;
-            delta.ToMatrix(havok_rotation);
-            float delta_pitch, delta_yaw, delta_roll;
-            havok_rotation.ToEulerAnglesXYZ(delta_pitch, delta_roll, delta_yaw);
-            pitch_offset += delta_pitch;
-            yaw_offset += delta_yaw;
-
-            p_player->data.angle.x = p_player->data.angle.x - delta_pitch;
-            auto corrected_yaw = p_player->data.angle.z - delta_yaw + 2.0f * glm::pi<float>();
-            corrected_yaw = std::fmod(corrected_yaw, 2.0f * glm::pi<float>());
-            p_player->data.angle.z = corrected_yaw;
-            *quat_out = new_quat;
-        } else {
-            if(GameFlow::gStore.internalSettings.pawnControl) {
-                pitch -= pitch_offset;
+        auto current_hmd_rotation = vr->get_rotation(0);
+        auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
+        auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
+        {
+            if (GameFlow::gStore.internalSettings.pawnControl) {
                 yaw -= yaw_offset;
                 havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
 
                 auto new_quat = RE::NiQuaternion(havok_rotation);
-                auto current_hmd_rotation = vr->get_rotation(0);
-                auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
-                auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
+
                 new_quat = new_quat * ni_hmd_rotation;
 
                 auto delta = quat_out->InvertVector() * new_quat;
                 delta.ToMatrix(havok_rotation);
                 float delta_pitch, delta_yaw, delta_roll;
                 havok_rotation.ToEulerAnglesXYZ(delta_pitch, delta_roll, delta_yaw);
-//                pitch_offset += delta_pitch;
                 yaw_offset += delta_yaw;
                 auto corrected_yaw = p_player->data.angle.z - delta_yaw + 2.0f * glm::pi<float>();
                 corrected_yaw = std::fmod(corrected_yaw, 2.0f * glm::pi<float>());
                 p_player->data.angle.z = corrected_yaw;
             }
-            if(GameFlow::gStore.internalSettings.decoupledPitch) {
+            if (GameFlow::gStore.internalSettings.decoupledPitch && !((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2)) {
                 pitch = 0.0f;
             }
             havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
-            *quat_out = RE::NiQuaternion(havok_rotation);
-            pitch_offset = 0.0f;
+            *quat_out = RE::NiQuaternion(havok_rotation) * ni_hmd_rotation;
         }
     } else {
-        pitch_offset = 0.0f;
         yaw_offset = 0.0f;
     }
 }
-//
-//uintptr_t CreationEngineCameraManager::onFPSGetCameraLocation(RE::FirstPersonState *fps, RE::NiPoint3 *point_out) {
-//    static auto instance = CreationEngineCameraManager::Get();
-//    static auto original_func = instance->m_onGetCameraLocationHook->get_original<decltype(onFPSGetCameraLocation)>();
-//    auto result = original_func(fps, point_out);
-//    static auto vr = VR::get();
-//    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
-//        return result;
-//    }
-//
-//    if(GameFlow::isImmovable() || GameFlow::isControlledByAI()) {
-//        return result;
-//    }
-//    if((ModConstants::headTrackingType == 0 && GameFlow::isAimingDownSights()) || ModConstants::headTrackingType == 2) {
-//        static auto get_rotation_func = instance->m_onGetCameraRotationHook->get_original<decltype(onFPSGetCameraRotation)>();
-//        RE::NiQuaternion quat_out;
-//        get_rotation_func(fps, &quat_out);
-//
-//        RE::NiMatrix3 havok_rotation;
-//        quat_out.ToMatrix(havok_rotation);
-//        float pitch, yaw, roll;
-//        havok_rotation.ToEulerAnglesXYZ(pitch, roll, yaw);
-//        pitch -= pitch_offset;
-//        yaw -= yaw_offset;
-//        havok_rotation.FromEulerAnglesXYZ(pitch, roll, yaw);
-//
-//        auto quat_rel =  RE::NiQuaternion(havok_rotation) * quat_out.Normalize().InvertVector();
-//        quat_out = RE::NiQuaternion(havok_rotation);
-//
-//        auto new_point = quat_rel * *point_out;
-//        auto current_hmd_rotation = vr->get_transform(0);
-//        current_hmd_rotation      =  current_hmd_rotation;
-//        auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(glm::extractMatrixRotation(current_hmd_rotation))));
-//        auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
-////        quat_out = quat_out * ni_hmd_rotation;
-//        auto offset = current_hmd_rotation[3];
-//        //offset -= vr->get_standing_origin();
-//
-//        *point_out = quat_out * RE::NiPoint3(offset.x, -offset.z, offset.y) + new_point;
-//    }
-//    return result;
-//}

@@ -4,6 +4,7 @@
 #include "RE/N/NiPoint3.h"
 #include <REL/Relocation.h>
 #include <glm/ext/scalar_constants.hpp>
+#include <CreationEngine/memory/ScanHelper.h>
 
 namespace RE
 {
@@ -76,10 +77,11 @@ namespace RE
 
 		NiPoint3 operator*(const NiPoint3& p) const
 		{
-			return NiPoint3(
+			return {
 				entry[0].pt[0] * p.x + entry[0].pt[1] * p.y + entry[0].pt[2] * p.z,
 				entry[1].pt[0] * p.x + entry[1].pt[1] * p.y + entry[1].pt[2] * p.z,
-				entry[2].pt[0] * p.x + entry[2].pt[1] * p.y + entry[2].pt[2] * p.z);
+				entry[2].pt[0] * p.x + entry[2].pt[1] * p.y + entry[2].pt[2] * p.z
+            };
 		}
 
 		RE::NiPoint4& operator[](size_t i)
@@ -102,6 +104,38 @@ namespace RE
 		}*/
 
         static constexpr float HALF_PI = glm::pi<float>() / 2.0f;
+
+
+        //YXZ
+//        inline bool ToEulerAnglesYXZ(float& yaw, float& pitch, float& roll) const {
+//            pitch = -asin(entry[1][2]);
+//            if(pitch >= HALF_PI) {
+//                yaw = -atan2(entry[2][0], entry[0][0]);
+//                roll = 0.0f;
+//            }
+//            else {
+//                if(pitch > -HALF_PI) {
+//                    yaw = -atan2(-entry[1][0], entry[1][1]);
+//                    roll = atan2(-entry[0][2], entry[2][2]);
+//                    return true;
+//                }
+//                yaw = atan2(entry[2][0], entry[0][0]);
+//                roll = 0.0f;
+//            }
+//            return false;
+//        }
+
+//        inline bool ToEulerAnglesYXZ(float& yaw, float& pitch, float& roll) const {
+//            typedef bool (*NiMatrixToEulerYXZfn)(const NiMatrix3*, float&, float&, float&);
+//            static auto NiMatrixToEulerYXZ = (NiMatrixToEulerYXZfn)((uintptr_t )MemoryScan::mod + 0x37d9574);
+//            return NiMatrixToEulerYXZ(this, yaw, pitch, roll);
+//        }
+//
+//        inline void FromEulerAnglesYXZ(float yaw, float pitch, float roll) {
+//            typedef void (*NiMatrixFromEulerYXZfn)(const RE::NiMatrix3*, float, float, float);
+//            static auto NiMatrixFromEulerYXZ = (NiMatrixFromEulerYXZfn)((uintptr_t )MemoryScan::mod + 0x37d8a64);
+//            NiMatrixFromEulerYXZ(this, yaw, pitch, roll);
+//        }
 
         inline bool ToEulerAnglesXYZ(float& arfXAngle, float& arfYAngle, float& arfZAngle) const {
             arfYAngle = -asin(entry[0][2]);
@@ -135,6 +169,14 @@ namespace RE
             kZRot.MakeZRotation(fZAngle);
             *this = kXRot * (kYRot * kZRot);
         }
+
+//        inline void FromEulerAnglesYXZ(float yaw, float pitch, float roll) {
+//            NiMatrix3 kYRot, kXRot, kZRot;
+//            kYRot.MakeYRotation(yaw);
+//            kXRot.MakeXRotation(pitch);
+//            kZRot.MakeZRotation(roll);
+//            *this = kYRot * (kXRot * kZRot);
+//        }
 
 
         inline void MakeXRotation(float fAngle) {

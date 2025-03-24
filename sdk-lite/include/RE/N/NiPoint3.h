@@ -20,11 +20,22 @@ namespace RE
         {
             return NiPoint3(x + a_rhs.x, y + a_rhs.y, z + a_rhs.z);
         }
-		NiPoint3     operator-(const NiPoint3& a_rhs) const;
+		NiPoint3     operator-(const NiPoint3& a_rhs) const
+        {
+            return NiPoint3(x - a_rhs.x, y - a_rhs.y, z - a_rhs.z);
+        }
 		float        operator*(const NiPoint3& a_rhs) const;
-		NiPoint3     operator*(float a_scalar) const;
-		NiPoint3     operator/(float a_scalar) const;
-		NiPoint3     operator-() const;
+		inline NiPoint3     operator*(float a_scalar) const noexcept
+        {
+            return NiPoint3(x * a_scalar, y * a_scalar, z * a_scalar);
+        }
+		NiPoint3     operator/(float a_scalar) const
+        {
+            return NiPoint3(x / a_scalar, y / a_scalar, z / a_scalar);
+        }
+		NiPoint3     operator-() const {
+            return NiPoint3(-x, -y, -z);
+        }
 		NiPoint3&    operator+=(const NiPoint3& a_rhs);
 		NiPoint3&    operator-=(const NiPoint3& a_rhs);
 		NiPoint3&    operator*=(const NiPoint3& a_rhs);

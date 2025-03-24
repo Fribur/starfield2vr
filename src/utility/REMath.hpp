@@ -57,10 +57,7 @@ static glm::mat4 remove_y_component(const glm::mat4& mat) {
     return glm::rowMajor4(glm::lookAtLH(Vector3f{}, Vector3f{ forward_dir }, Vector3f(0.0f, 1.0f, 0.0f)));
 }
 
-static glm::mat4 remove_roll(const glm::mat4& mat) {
-    // Extract the forward direction from the matrix
-    const auto forward = glm::normalize(glm::vec3(mat[2]));
-
+static glm::mat4 make_rotation_from_forward(glm::vec3 forward) {
     // Fixed world up vector
     const glm::vec3 world_up(0.0f, 1.0f, 0.0f);
 
@@ -76,6 +73,11 @@ static glm::mat4 remove_roll(const glm::mat4& mat) {
     result[1] = glm::vec4(up, 0.0f);
     result[2] = glm::vec4(forward, 0.0f);
     return result;
+}
+
+static glm::mat4 remove_roll(const glm::mat4& mat) {
+    const auto forward = glm::normalize(glm::vec3(mat[2]));
+    return make_rotation_from_forward(forward);
 }
 
 static glm::mat4 remove_roll_pitch(const glm::mat4& mat) {

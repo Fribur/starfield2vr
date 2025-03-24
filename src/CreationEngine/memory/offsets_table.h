@@ -40,7 +40,8 @@ namespace OffsetsTable
         {  865059, 0x66C53F8, 0x6701238 },
         { 1391721, 0x3582490, 0x35F06A0 },
         {  428853, 0x55454F8, 0x556CA28 },
-        {  165928, 0x2ac7918, 0x2ABE558 }
+        {  165928, 0x2ac7918, 0x2ABE558 },
+        {  440810, 0x55ad438, 0x55D4A88 }
     };
 
     inline std::unordered_map<int, OffsetMapping> offsetMap = [] {

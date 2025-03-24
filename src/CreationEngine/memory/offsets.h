@@ -37,6 +37,14 @@ namespace Steam::MemoryOffsets
         }
     }
 
+    namespace BSFadeNode {
+        inline uintptr_t vtable_UpdateWorld() {
+            static auto pattern = ".?AVBSFadeNode@@";
+            static auto addr = ((uintptr_t*)VTable("BSFadeNode::vftable", pattern, OffsetsTable::GetOffset(440810)))[79];
+            return addr;
+        }
+    }
+
     namespace BSSceneNode {
         inline uintptr_t vtable_Update() {
             static auto pattern = ".?AVBSSceneNode@@";
@@ -326,6 +334,14 @@ namespace Xbox::MemoryOffsets
         inline uintptr_t GetLocationV() {
             static auto pattern = ".?AVFirstPersonState@@";
             static auto addr = ((uintptr_t*)VTable("FirstPersonState::vftable[14]", pattern, OffsetsTable::GetOffset(165928)))[14];
+            return addr;
+        }
+    }
+
+    namespace BSFadeNode {
+        inline uintptr_t vtable_UpdateWorld() {
+            static auto pattern = ".?AVBSFadeNode@@";
+            static auto addr = ((uintptr_t*)VTable("BSFadeNode::vftable", pattern, OffsetsTable::GetOffset(440810)))[79];
             return addr;
         }
     }

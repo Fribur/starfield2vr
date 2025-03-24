@@ -88,7 +88,7 @@ public:
     }
 
     void                          UpdateWorldCamera();
-//    void onUpdateNiCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
+    static void onNiAVObjectUpdateWorld(RE::NiAVObject* obj, RE::NiUpdateData* a_data);
     void onScaleformSetViewPort(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
 
     CreationEngineCameraManager(const CreationEngineCameraManager&)            = delete;
@@ -104,7 +104,7 @@ public:
 private:
     CreationEngineCameraManager()  = default;
     ~CreationEngineCameraManager() = default;
-    std::unique_ptr<FunctionHook> m_onUpdateNiCameraHook{};
+    std::unique_ptr<FunctionHook> m_onNiAVObjectUpdateWorldHook{};
     std::unique_ptr<FunctionHook> m_onUpdateWorldHook{};
     std::unique_ptr<FunctionHook> m_onPerformInputProcessingHook{};
     std::unique_ptr<FunctionHook> m_onCameraCutProcessEventHook{};
@@ -117,13 +117,13 @@ private:
     std::unique_ptr<FunctionHook> m_onSetViewportHook{};
     std::unique_ptr<FunctionHook> m_onSetCameraScissorHook{};
     std::unique_ptr<FunctionHook> m_onGetCameraRotationHook{};
+    std::unique_ptr<FunctionHook> m_onFirstPersonStateUpdatePitchHook{};
 //    std::unique_ptr<FunctionHook> m_onGetCameraLocationHook{};
 //    void                          UpdateCamera(RE::NiCamera* a_camera, RE::NiUpdateData* a_data);
 //    void                          rotateCamera(RE::NiCamera* a_camera, const RE::NiMatrix3* a_rot);
     void                          onSetNiFrustumInternal(RE::NiCamera* pCamera, RE::NiFrustum* pFrustum);
     void                          onScaleformSetViewPortInternal(uintptr_t* thisMovie, Scaleform::Gfx::Viewport* viewport);
     static void onFPSGetCameraRotation(RE::FirstPersonState* fps, RE::NiQuaternion* quat_out);
-//    static uintptr_t onFPSGetCameraLocation(RE::FirstPersonState* fps, RE::NiPoint3* point_out);
     unsigned int*                 m_globalFrameCount{};
     float*                        m_globalWorldFov{};
 
