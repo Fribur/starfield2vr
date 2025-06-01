@@ -22,6 +22,8 @@ jobs:
           
       - name: Setup CMake
         uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
 
       - name: Get version
         id: get_version
