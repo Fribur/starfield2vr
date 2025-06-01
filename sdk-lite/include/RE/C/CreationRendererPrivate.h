@@ -32,7 +32,7 @@ namespace RE::CreationRendererPrivate
 #pragma pack(push, 1)
 	struct RenderPassD3D12Resource
 	{
-		uint8_t         pad[120];
+		uint8_t         pad[0x38];
 		ID3D12Resource* pResource;
 		uint8_t         trailing[1024];
 	};
@@ -44,7 +44,7 @@ namespace RE::CreationRendererPrivate
 		uint8_t                          pad[4];
 		uint32_t                         width;
 		uint32_t                         height;
-		uint8_t                          pad1[60];
+		uint8_t                          pad1[76];
 		RenderPassD3D12Resource*         pResourceContext;
 		uint32_t                         sizeOrFrameCountOrIndex;
 		uint32_t                         unk_48;

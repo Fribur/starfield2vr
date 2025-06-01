@@ -37,9 +37,28 @@ namespace CreationEngine
         DirectX12Module2* m_directX12Module2;
     };
     struct DirectX12Module {
-        char pad[0x20];
+        char pad[0x28];
         DirectX12Module1* m_directX12Module1;
     };
+}
+
+namespace RE::CreationRendererPrivate {
+    struct D3D12CommandQueueWrapper
+    {
+        char pad[96];
+        ID3D12CommandQueue *pCommandQueue;
+    };
+
+    struct D3D12Context {
+        char pad[8];
+        D3D12CommandQueueWrapper *pQueue[3];
+    };
+
+    struct ServiceLocator {
+        char pad[0x28];
+        D3D12Context *pD3D12Context;
+    };
+
 }
 
 class CreationEngineDirectX12Module
@@ -51,16 +70,20 @@ public:
         return instance;
     }
     inline static ID3D12CommandQueue* GetCommandQueue(bool hw_scheduling) {
-        auto instance = Get();
-        auto pX12Module = *instance->m_directX12Module;
-        if(pX12Module == nullptr) {
+        static auto instance = Get();
+        auto pServiceLocator = *instance->g_ServiceLocator;
+        if(pServiceLocator == nullptr) {
             return nullptr;
         }
-        if(hw_scheduling) {
-            return pX12Module->m_directX12Module1->m_directX12Module2->m_sl_commandQueue->m_async_commandQueue;
-        } else {
-            return pX12Module->m_directX12Module1->m_directX12Module2->m_commandQueue;
+        auto pD3D12Context = pServiceLocator->pD3D12Context;
+        if(pD3D12Context == nullptr) {
+            return nullptr;
         }
+        auto pQueue = pD3D12Context->pQueue[0]; // 0 - Direct, 1 - compute, 2 - copy
+        if (pQueue == nullptr) {
+            return nullptr;
+        }
+        return pQueue->pCommandQueue;
     }
 private:
     void InstallHooks();
@@ -68,6 +91,6 @@ private:
         InstallHooks();
     };
     ~CreationEngineDirectX12Module() = default;
-    CreationEngine::Nvidia::DirectX12Module** m_sl_directX12Module{};
-    CreationEngine::DirectX12Module** m_directX12Module{};
+//    CreationEngine::Nvidia::DirectX12Module** m_sl_directX12Module{};
+    RE::CreationRendererPrivate::ServiceLocator** g_ServiceLocator{};
 };

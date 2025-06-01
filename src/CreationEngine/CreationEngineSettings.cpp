@@ -46,8 +46,10 @@ RE::Setting* CreationEngineSettings::get_setting(std::string_view id, CreationEn
     };
     switch (type) {
     case SettingType::kINISetting: {
-        auto settings = RE::INISettingCollection::GetSingleton();
-        return settings->GetSetting(id.data());
+//        auto settings = RE::INISettingCollection::GetSingleton();
+        static auto ini_settings = scan_settings(".?AV?$SettingT@VINISettingCollection@@@@");
+//        return settings->GetSetting(id.data());
+        return ini_settings[id.data()];
     }
     case SettingType::kINIPrefSetting: {
         static auto init_perf_settings = scan_settings(".?AVINIPrefSetting@@");

@@ -44,14 +44,15 @@ namespace RE
 	{
 	public:
 
-		virtual ~PlayerCamera();  // 00
+		virtual ~PlayerCamera() = default;  // 00
 
-		inline bool IsInFirstPerson() const {
+		[[nodiscard]] inline bool IsInFirstPerson() const {
         return QCameraEquals(CameraState::kFirstPerson);
     }
         NiNode*       sceneNode;                  //0x0008 BSSceneNode
-        char 			   pad8[0x168];                     //0x0170
-		FirstPersonState*      pFirstPersonModeState;         //0x0178
+        TESCameraState* currentState;
+        char 			   pad8[0x170];                     //0x0170
+		FirstPersonState*      pFirstPersonModeState;         //0x0188
 		TESCameraState*   pVanityState;                  //0x0178
 		TESCameraState*   pVatsCameraState;              //0x0180
 		TESCameraState*   pIronSightState;               //0x0188
@@ -116,14 +117,14 @@ namespace RE
 
 	private:
 		[[nodiscard]] inline bool QCameraEquals(CameraState a_cameraState) const {
-        using func_t = decltype(&PlayerCamera::QCameraEquals);
-        static  REL::Relocation<func_t> func{ GameStore::MemoryOffsets::PlayerCamera::QCameraEquals() };
-        return func(this, a_cameraState);
-    }
+            auto states = &this->pFirstPersonModeState;
+            auto state = states[static_cast<std::size_t>(a_cameraState)];
+            return (uintptr_t ) state == (uintptr_t )this->currentState;
+        }
 	};
-	static_assert(offsetof(PlayerCamera, pFirstPersonModeState) == 0x178);
+	static_assert(offsetof(PlayerCamera, pFirstPersonModeState) == 0x188);
 //	static_assert(offsetof(PlayerCamera, N000012DD) == 0xA8);
-	static_assert(offsetof(PlayerCamera, horizontal_rotation) == 0x2B8);
-	static_assert(offsetof(PlayerCamera, fov) == 0x270);
-	static_assert(sizeof(PlayerCamera) == 0x2E0);
+	static_assert(offsetof(PlayerCamera, horizontal_rotation) == 0x2C8);
+	static_assert(offsetof(PlayerCamera, fov) == 0x280);
+	static_assert(sizeof(PlayerCamera) == 0x2F0);
 }

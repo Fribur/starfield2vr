@@ -27,10 +27,10 @@ __int64 onRenderGraphRenderStartDetour(RE::CreationRendererPrivate::RenderGraph*
     return CreationEngineRendererModule::Get()->onRenderGraphRenderStart(rcx, pRenderGraphData, r8, r9);
 }
 
-__int64 onRenderFrameStartDetour(void* rcx, __int64 rdx, __int64 r8, __int64 r9)
-{
-    return CreationEngineRendererModule::Get()->onRenderFrameStart(rcx, rdx, r8, r9);
-}
+//__int64 onRenderFrameStartDetour(void* rcx, __int64 rdx, __int64 r8, __int64 r9)
+//{
+//    return CreationEngineRendererModule::Get()->onRenderFrameStart(rcx, rdx, r8, r9);
+//}
 
 std::unique_ptr<FunctionHook> m_onWindowMessageHook;
 
@@ -74,9 +74,9 @@ void CreationEngineRendererModule::InstallHooks()
     // ID is exactly incrementing frames 149000
     // 202136 ID is function on start is frame start on end is frame end, however it is significantly decreases fps
     //    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ REL::ID(202136) };
-    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphRenderPipelineExecute() };
-    m_onRenderFrameStartHook = std::make_unique<FunctionHook>(onRenderFrameStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderFrameStartDetour));
-    m_onRenderFrameStartHook->create();
+//    REL::Relocation<uintptr_t> onRenderFrameStartFuncAddr{ GameStore::MemoryOffsets::CreationRenderer::RenderGraphRenderPipelineExecute() };
+//    m_onRenderFrameStartHook = std::make_unique<FunctionHook>(onRenderFrameStartFuncAddr.address(), reinterpret_cast<uint64_t>(&onRenderFrameStartDetour));
+//    m_onRenderFrameStartHook->create();
 
     REL::Relocation<uintptr_t> taa_vfunc7_hook_addr{ GameStore::MemoryOffsets::CreationRenderer::OnTaaVFunc7() };
     taa_vfunc7_hook = std::make_unique<FunctionHook>(taa_vfunc7_hook_addr.address(), reinterpret_cast<uint64_t>(&CreationEngineRendererModule::onTaaPass));
@@ -183,14 +183,15 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
     }
 }
 
-__int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2)
-{
-    using func_t              = decltype(onRenderFrameStartDetour);
-    static auto original_func = m_onRenderFrameStartHook->get_original<func_t>();
-//    spdlog::info("Frame Submit Start[{:X}], fc=[m={},r={}]", GetCurrentThreadId(), GameFlow::gameLoopFrameCount(), GameFlow::renderLoopFrameCount());
-    auto result = original_func(pVoid, i, i1, i2);
-    return result;
-}
+//__int64 CreationEngineRendererModule::onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2)
+//{
+//    using func_t              = decltype(onRenderFrameStartDetour);
+//    static auto original_func = m_onRenderFrameStartHook->get_original<func_t>();
+////    spdlog::info("Frame Submit Start[{:X}], fc=[m={},r={}]", GetCurrentThreadId(), GameFlow::gameLoopFrameCount(), GameFlow::renderLoopFrameCount());
+//    auto result = original_func(pVoid, i, i1, i2);
+//    return result;
+//}
+
 
 void CreationEngineRendererModule::SetWindowSize(int width, int height)
 {
@@ -228,20 +229,31 @@ void CreationEngineRendererModule::SetWindowSize(int width, int height)
     }
 
     spdlog::info("Setting window size to {} {}", width, height);
-    auto rect = &(*m_creationEngineSettings)->displayGameSettings.displayRect;
+    auto ce_rect = &(*m_creationEngineSettings)->displayGameSettings.displayRect;
 
-    rect->cx = width + rect->x;
-    rect->cy = height + rect->y;
+    ce_rect->cx = width + ce_rect->x;
+    ce_rect->cy = height + ce_rect->y;
     (*m_creationEngineSettings)->displayGameSettings.flags |= 0x100;
-    WINDOWPOS pos;
-    pos.hwnd            = (*m_creationEngineSettings)->pHwindow->windowHandle;
-    pos.hwndInsertAfter = nullptr;
-    pos.x               = rect->x;
-    pos.y               = rect->y;
-    pos.cx              = width;
-    pos.cy              = height;
-    pos.flags           = 0;
-    SendMessage((*m_creationEngineSettings)->pHwindow->windowHandle, WM_WINDOWPOSCHANGED, 0, reinterpret_cast<LPARAM>(&pos));
+//    WINDOWPOS pos;
+//    pos.hwnd            = (*m_creationEngineSettings)->pHwindow->windowHandle;
+//    pos.hwndInsertAfter = nullptr;
+//    pos.x               = rect->x;
+//    pos.y               = rect->y;
+//    pos.cx              = width;
+//    pos.cy              = height;
+//    pos.flags           = 0;
+//    SendMessage((*m_creationEngineSettings)->pHwindow->windowHandle, WM_WINDOWPOSCHANGED, 0, reinterpret_cast<LPARAM>(&pos));
+    auto  hWnd      = g_framework->get_window();
+    RECT  rect      = { 0, 0, (LONG)width, (LONG)height };
+    DWORD dwStyle   = GetWindowLong(hWnd, GWL_STYLE);
+    DWORD dwExStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
+    BOOL  hasMenu   = GetMenu(hWnd) != NULL;
+    AdjustWindowRectEx(&rect, dwStyle, hasMenu, dwExStyle);
+
+    int nWidth  = rect.right - rect.left;
+    int nHeight = rect.bottom - rect.top;
+    spdlog::info("Setting window size to {} {}", nWidth, nHeight);
+    SetWindowPos(hWnd, nullptr, 0, 0, nWidth, nHeight, SWP_ASYNCWINDOWPOS);
 }
 
 uintptr_t CreationEngineRendererModule::onUpdateConstantBufferView(uint8_t copyCurrentToPast, uint8_t resetHistory, uintptr_t i2, uintptr_t i3, uintptr_t i4, double d, char i5,

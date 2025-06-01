@@ -13,11 +13,11 @@ namespace RE
 	public:
 		virtual ~INISettingCollection();  // 000
 
-		[[nodiscard]] static INISettingCollection* GetSingleton()
-		{
-			REL::Relocation<INISettingCollection**> singleton{ GameStore::MemoryOffsets::Setting::INISettingCollection() };
-			return *singleton;
-		}
+//		[[nodiscard]] static INISettingCollection* GetSingleton()
+//		{
+//			REL::Relocation<INISettingCollection**> singleton{ GameStore::MemoryOffsets::Setting::INISettingCollection() };
+//			return *singleton;
+//		}
 
 		[[nodiscard]] Setting* GetSetting(const std::string_view a_name)
 		{

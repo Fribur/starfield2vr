@@ -45,6 +45,7 @@ namespace RE
     struct CreationEngineSettings
     {
         uint64_t            unk0;
+        uint64_t            unk1;
         DisplayGameSettings displayGameSettings;
         uint8_t             pad2[2];
         int                 windowHeight;
@@ -56,8 +57,8 @@ namespace RE
         uint64_t            features;
         uint8_t             trainling[1024];
     };
-
-    static_assert(offsetof(CreationEngineSettings, pHwindow) == 0x40);
+    static_assert(offsetof(CreationEngineSettings, pHwindow) == 0x48);
+    static_assert(offsetof(CreationEngineSettings, displayGameSettings) == 0x10);
 
     struct DlssConstants
     {
@@ -120,8 +121,7 @@ namespace RE
 
     struct RenderGraphDataD3D12Context
     {
-        D3D12Context*                   pD3D12Context;
-        D3DContextCommnadAllocatorData* pD3DContextCommnadAllocatorData;
+        char pad[0x60];
         ID3D12GraphicsCommandList*      pID3D12CommandList;
         D3DContextBindData*             pD3DContextBindData;
         D3DContextBindData*             pD3DContextBindDataDefault;
@@ -131,6 +131,7 @@ namespace RE
     };
 
 #pragma pack(pop)
+    static_assert(offsetof(RenderGraphDataD3D12Context, pID3D12CommandList) == 0x60);
 } // namespace RE
 
 class CreationEngineRendererModule
@@ -163,7 +164,7 @@ public:
     }
 
     __int64   onRenderGraphRenderStart(RE::CreationRendererPrivate::RenderGraph* pGraph, RE::CreationRendererPrivate::RenderGraphData* pRenderGraphData, __int64 i1, __int64 i2);
-    __int64   onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2);
+//    __int64   onRenderFrameStart(void* pVoid, __int64 i, __int64 i1, __int64 i2);
     void      SetWindowSize(int width, int height);
     uintptr_t onUpdateConstantBufferView(uint8_t i, uint8_t i1, uintptr_t i2, uintptr_t i3, uintptr_t i4, double d, char i5, RE::RenderPassConstantBufferView* pView);
 

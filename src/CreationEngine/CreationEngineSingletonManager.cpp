@@ -8,11 +8,11 @@ RE::Main::SceneGraphRoot* CreationEngineSingletonManager::GetSceneGraphRoot()
     return *singleton;
 }
 
-RE::StorageTable::RenderGraphHandle* CreationEngineSingletonManager::GetRenderGraphHandle()
-{
-    static REL::Relocation<RE::StorageTable::RenderGraphHandle**> singleton{ GameStore::MemoryOffsets::StorageTable::RenderGraphHandle::Singleton()};
-    return *singleton;
-}
+//RE::StorageTable::RenderGraphHandle* CreationEngineSingletonManager::GetRenderGraphHandle()
+//{
+//    static REL::Relocation<RE::StorageTable::RenderGraphHandle**> singleton{ GameStore::MemoryOffsets::StorageTable::RenderGraphHandle::Singleton()};
+//    return *singleton;
+//}
 
 RE::PlayerCamera* CreationEngineSingletonManager::GetPlayerCameraSingleton()
 {
