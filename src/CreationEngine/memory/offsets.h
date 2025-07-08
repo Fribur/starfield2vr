@@ -159,7 +159,7 @@ namespace Steam::MemoryOffsets
         inline uintptr_t GetDXGIState()
         {
             // ID 145355
-            auto        pattern     = "8B C1 44 8B C1 25 1C 58 04 00 3D 1C 58 04 00 75 06 B8 C3 0A 00 00 C3 41 F6 C0 02 0F";
+            auto        pattern     = "8B C1 44 8B C1 25 1C 58 04 00 3D 1C 58 04 00 75 06 B8 C3 0A 00 00 C3 41 F6 C0 02 0F 85 87 00 00 00";
             static auto address_ptr = FuncRelocation(pattern, OffsetsTable::GetOffset(145355), 145355);
             auto val = (uintptr_t)mod + OffsetsTable::GetOffset(145355);
             return val;

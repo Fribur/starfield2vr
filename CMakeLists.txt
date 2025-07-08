@@ -279,6 +279,11 @@ if(XBOX_STORE)
 endif()
 
 
+if(SIGNATURE_SCAN)
+  add_compile_definitions(SIGNATURE_SCAN)
+endif()
+
+
 install(
   TARGETS ${PROJECT_NAME}
   DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -82,11 +82,46 @@ namespace RE::CreationRendererPrivate
 		[[nodiscard]] inline uint32_t getDXGIState() const {
 			return getDXGIState(stateOrFlags);
 		}
-		inline static uint32_t getDXGIState(uint32_t state) {
-			using func_t = int (*)(int);
-			static REL::Relocation<func_t> getDXGIState_original{ GameStore::MemoryOffsets::CreationRenderer::GetDXGIState() };
-			return getDXGIState_original(state);
-		}
+//		inline static uint32_t getDXGIState(uint32_t state) {
+//			using func_t = int (*)(int);
+//			static REL::Relocation<func_t> getDXGIState_original{ GameStore::MemoryOffsets::CreationRenderer::GetDXGIState() };
+//			return getDXGIState_original(state);
+//		}
+
+        inline static uint32_t getDXGIState(uint32_t state) {
+            int result; // eax
+            int v3; // ecx
+            int v4; // edx
+            int v5; // r9d
+            int v6; // ecx
+            int v7; // edx
+
+            if ( (state & 0x4581C) == 284700 )
+                return 2755;
+            if ( (state & 2) != 0 )
+                return 0;
+            v3 = (state >> 3) & 0x800;
+            v4 = v3 | 0x400;
+            if ( (state & 0x2000) == 0 )
+                v4 = v3;
+            v5 = v4 | 8;
+            if ( (state & 0x40) == 0 )
+                v5 = v4;
+            if ( (state & 0x10000) != 0 )
+                return 0;
+            v6 = v5 | 4;
+            if ( (state & 0x20) == 0 )
+                v6 = v5;
+            v7 = v6 | 0x40;
+            if ( (state & 0x800) == 0 )
+                v7 = v6;
+            if ( (state & 0x20000) != 0 )
+                return 0;
+            result = v7 | 0x80;
+            if ( (state & 0x40000) == 0 )
+                return v7;
+            return result;
+        }
 	};
 	static_assert(sizeof(RenderPassItem) == 0x20);
 	static_assert(offsetof(RenderPassItem, renderGraphIndex) == 0x08);

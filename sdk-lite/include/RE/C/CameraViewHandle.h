@@ -81,7 +81,7 @@ namespace RE::StorageTable
 	public:
 		virtual ~CameraViewHandle() = 0;
 
-		void Register(uint32_t* idOut) {
+		/*void Register(uint32_t* idOut) {
 			using func_t = decltype(&CameraViewHandle::Register);
 			REL::Relocation<func_t> func{ REL::ID(201697) };
 			return func(this, idOut);
@@ -90,12 +90,12 @@ namespace RE::StorageTable
 		static CameraViewHandle* Singleton() {
 			static REL::Relocation<CameraViewHandle**> singleton{ REL::ID(772635) };
 			return *singleton;
-		}
+		}*/
 
 		/**
 		 * @param id assigned after register usually it is id for scene.
 		 */
-		static void writeCameraViewData(uint32_t id, CameraViewData* data)
+		/*static void writeCameraViewData(uint32_t id, CameraViewData* data)
 		{
 			using func_t = decltype(&CameraViewHandle::writeCameraViewData);
 			REL::Relocation<func_t> func{ REL::ID(201916) };
@@ -121,7 +121,7 @@ namespace RE::StorageTable
 			using func_t = decltype(&CameraViewHandle::getFeatureSetup);
 			REL::Relocation<func_t> func{ REL::ID(201271) };
 			return func(id);
-		}
+		}*/
 	};
 	static_assert(sizeof(CameraViewHandle) == 0x150);
 }
