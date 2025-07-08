@@ -12,7 +12,7 @@ namespace MemoryScan {
     inline uintptr_t VTable(const char* hook_name, const char* table, uintptr_t static_offset)
     {
         uintptr_t val = 0;
-#if defined _DEBUG || defined SGINATURE_SCAN
+#if defined _DEBUG || defined SIGNATURE_SCAN
         auto ref = utility::rtti::find_vtable(mod, table);
         if (!ref) {
             spdlog::error("VTable pattern not found for id={}", hook_name );
@@ -33,7 +33,7 @@ namespace MemoryScan {
 
     inline uintptr_t FuncRelocation(const char* pattern, uintptr_t static_offset = 0 , uintptr_t a_id = 0) {
         uintptr_t val = 0;
-#ifdef _DEBUG
+#if defined _DEBUG || defined SIGNATURE_SCAN
         auto ref = utility::scan(mod, pattern);
         if (!ref) {
             spdlog::error("FuncRelocation pattern not found for id={}", a_id);
@@ -57,7 +57,7 @@ namespace MemoryScan {
     };
     inline uintptr_t InstructionRelocation(const char* pattern, UINT offset_begin, UINT instruction_size,  uintptr_t static_offset = 0 , uintptr_t a_id = 0) {
         uintptr_t val = 0;
-#ifdef _DEBUG
+#if defined _DEBUG || defined SIGNATURE_SCAN
         auto ref = utility::scan(mod, pattern);
         if (!ref) {
             spdlog::error("AsmCodeRelocation pattern not found for id={}", a_id);
