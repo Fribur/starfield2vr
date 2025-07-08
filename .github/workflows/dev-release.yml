@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        preset: [release-no-debug-msvc, release-no-debug-msvc-xbox]
+        preset: [release-no-debug-msvc]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,38 +42,53 @@ jobs:
       - name: Create Package
         run: |
           $Version = "${{ steps.get_version.outputs.version }}"
-          $ZipName = if ("${{matrix.preset}}" -like "*xbox") { "starfield2vr-xbox-$Version" } else { "starfield2vr-$Version" }
-          mkdir ${{github.workspace}}/package
+          $OpenXRZipName = "starfield-vr-openxr-$Version"
+          $OpenVRZipName = "starfield-vr-openvr-$Version"
+          
+          # Create package directories
+          mkdir ${{github.workspace}}/package-openxr
+          mkdir ${{github.workspace}}/package-openvr
           mkdir ${{github.workspace}}/symbols
           
-          # Copy release files
-          Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.dll" "${{github.workspace}}/package/"
-          Copy-Item "${{github.workspace}}/shipping/openvr_api.dll" "${{github.workspace}}/package/"
-          Copy-Item "${{github.workspace}}/shipping/openxr_loader.dll" "${{github.workspace}}/package/"
+          # Copy OpenXR release files
+          Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.dll" "${{github.workspace}}/package-openxr/"
+          Copy-Item "${{github.workspace}}/shipping/openxr_loader.dll" "${{github.workspace}}/package-openxr/"
+          
+          # Copy OpenVR release files
+          Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.dll" "${{github.workspace}}/package-openvr/"
+          Copy-Item "${{github.workspace}}/shipping/openvr_api.dll" "${{github.workspace}}/package-openvr/"
           
           # Copy debug symbols
-          Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.pdb" "${{github.workspace}}/symbols/"
+          # Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.pdb" "${{github.workspace}}/symbols/"
           Copy-Item "${{github.workspace}}/build/build-${{matrix.preset}}/Release/dxgi.dll" "${{github.workspace}}/symbols/"
           
           # Create packages
-          7z a "${{github.workspace}}/$ZipName.zip" "${{github.workspace}}/package/*"
-          7z a "${{github.workspace}}/$ZipName-symbols.zip" "${{github.workspace}}/symbols/*"
+          7z a "${{github.workspace}}/$OpenXRZipName.zip" "${{github.workspace}}/package-openxr/*"
+          7z a "${{github.workspace}}/$OpenVRZipName.zip" "${{github.workspace}}/package-openvr/*"
+          7z a "${{github.workspace}}/$OpenXRZipName-symbols.zip" "${{github.workspace}}/symbols/*"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: starfield2vr-*.zip
+          files: starfield-vr-*.zip
           draft: false
           prerelease: false
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload release artifacts
+      - name: Upload OpenXR artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.preset }}-${{ steps.get_version.outputs.version }}
-          path: ${{github.workspace}}/package/*
+          name: ${{ matrix.preset }}-openxr-${{ steps.get_version.outputs.version }}
+          path: ${{github.workspace}}/package-openxr/*
+          if-no-files-found: error
+
+      - name: Upload OpenVR artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.preset }}-openvr-${{ steps.get_version.outputs.version }}
+          path: ${{github.workspace}}/package-openvr/*
           if-no-files-found: error
 
       - name: Upload debug symbols
