@@ -2,6 +2,18 @@
 
 starfield2vr is a VR modding project for Starfield that aims to deliver immersive gameplay. This project is based on [PrayDog's REFramework](https://github.com/praydog/REFramework/).
 
+## Features
+
+- **Full 6DoF Head Tracking** - Six degrees of freedom for immersive VR experience
+- **Roomscale Support** - Standing origin with configurable world scale
+- **Configurable HUD** - Adjustable HUD scale and distance for comfortable viewing
+- **OpenXR Resolution Scale** - Customize rendering resolution for your headset
+- **Decoupled Pitch** - Independent head movement from character orientation
+- **Desktop Recording Fix** - Option to fix desktop mirror for recording/streaming
+- **Haptic Feedback** - Controller vibration support for immersive gameplay
+- **Quad View Support** - Compatible with Pimax and Virtual Desktop
+- **Multiple Controller Support** - Works with Oculus Touch, Vive wands, and Valve Index controllers
+
 ## Prerequisites
 
 - Set your VR headset as the default OpenXR engine
@@ -35,6 +47,21 @@ C:\XboxGames\Starfield\Content
 
 - In-game Overlay has F11 hotkey (works only on main display, not in HMD)
 - Mod is based on [PrayDog's REFramework](https://github.com/praydog/REFramework/)
+
+## Overlay Settings (F11 Menu)
+
+The in-game overlay provides configurable options:
+- **OpenXR Resolution Scale** - Adjust VR rendering resolution (0.1x to 5.0x)
+- **Desktop Recording Fix** - Enable for better desktop mirror quality
+- **Set Standing Origin Key** - Recenter your VR position
+
+## Supported VR Controllers
+
+| Controller | Status |
+|------------|--------|
+| Oculus Touch / Meta Quest | Fully supported |
+| Valve Index (Knuckles) | Fully supported |
+| HTC Vive Wands | Supported |
 
 ## Controller Layout
 
