@@ -55,14 +55,6 @@ The in-game overlay provides configurable options:
 - **Desktop Recording Fix** - Enable for better desktop mirror quality
 - **Set Standing Origin Key** - Recenter your VR position
 
-## Supported VR Controllers
-
-| Controller | Status |
-|------------|--------|
-| Oculus Touch / Meta Quest | Fully supported |
-| Valve Index (Knuckles) | Fully supported |
-| HTC Vive Wands | Supported |
-
 ## Controller Layout
 
 | Control | Action |
