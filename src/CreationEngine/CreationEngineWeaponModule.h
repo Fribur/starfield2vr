@@ -1,17 +1,17 @@
 #pragma once
 #include <RE/N/NiAVObject.h>
 #include <RE/P/PlayerCharacter.h>
-#include <utils/FunctionHook.h>
+#include <memory/FunctionHook.h>
 
 class CreationEngineWeaponModule
 {
 public:
-    inline static std::shared_ptr<CreationEngineWeaponModule>& Get()
+    static std::shared_ptr<CreationEngineWeaponModule>& Get()
     {
-        static std::shared_ptr<CreationEngineWeaponModule> instance{ std::make_shared<CreationEngineWeaponModule>() };
+        static auto instance{ std::make_shared<CreationEngineWeaponModule>() };
         return instance;
     }
-    inline CreationEngineWeaponModule() {
+    CreationEngineWeaponModule() {
         install_hooks();
     }
     ~CreationEngineWeaponModule() = default;

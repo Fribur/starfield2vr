@@ -2,7 +2,7 @@
 #include <RE/N/NiAVObject.h>
 #include <glm/vec4.hpp>
 #include <glm/vec3.hpp>
-#include <utils/FunctionHook.h>
+#include "memory/FunctionHook.h"
 
 namespace CEDebug {
     struct RayCastQuery {

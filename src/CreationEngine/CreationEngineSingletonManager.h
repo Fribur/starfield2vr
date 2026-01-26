@@ -2,7 +2,6 @@
 #include "RE/M/Main.h"
 #include <RE/P/PlayerCharacter.h>
 #include <RE/T/TESObjectREFR.h>
-#include <SFVR.hpp>
 #include <utility/Scan.hpp>
 
 namespace RE {

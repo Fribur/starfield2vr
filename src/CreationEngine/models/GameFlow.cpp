@@ -99,16 +99,7 @@ namespace GameFlow
         return settings;
     }
 
-
-    bool shouldShowFlatScreen() {
-        if(vr->get_runtime()->loaded && vr->get_runtime()->is_openvr()) {
-            // quad display is not implemented in openvr
-            return false;
-        }
-        if(gStore.internalSettings.enforceFlatScreen) {
-            return true;
-        }
-
+    bool isShowingMenu() {
         return gState.uiData.rendered_menus_count[(gState.uiData.modulino + 1) % 2] >= 0;
     }
 

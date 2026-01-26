@@ -7,7 +7,7 @@
 #include <sl.h>
 #include <sl_dlss.h>
 #include <utility/PointerHook.hpp>
-#include <utils/FunctionHook.h>
+#include <memory/FunctionHook.h>
 #include <utils/PolyHook2FunctionHook.h>
 using Microsoft::WRL::ComPtr;
 

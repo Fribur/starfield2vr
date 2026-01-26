@@ -1,12 +1,6 @@
-[submodule "extern/minhook"]
-	path = extern/minhook
-	url = https://github.com/TsudaKageyu/minhook.git
 [submodule "extern/CommonLibSF"]
 	path = extern/CommonLibSF
 	url = https://github.com/mutars/CommonLibSF.git
-[submodule "extern/Streamline"]
-	path = extern/Streamline
-	url = https://github.com/NVIDIAGameWorks/Streamline.git
-[submodule "extern/imgui"]
-	path = extern/imgui
-	url = https://github.com/ocornut/imgui.git
+[submodule "extern/vrframework"]
+	path = extern/vrframework
+	url = git@github.com:mutars/vrframework.git

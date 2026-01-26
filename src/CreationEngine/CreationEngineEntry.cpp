@@ -1,9 +1,5 @@
 #include "CreationEngineEntry.h"
 #include "CreationEngineConstants.h"
-#include "CreationEngineGameLoop.h"
-#include "CreationEngineSingletonManager.h"
-#include "CreationEngineWeaponModule.h"
-#include "HavokModule.h"
 #include "imgui.h"
 #include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
@@ -11,14 +7,15 @@
 #include <mods/VR.hpp>
 #include <vector>
 
+#include "CreationEngineCameraManager.h"
+#include "CreationEngineInputManager.h"
+#include "CreationEngineRendererModule.h"
+
 std::optional<std::string> CreationEngineEntry::on_initialize()
 {
-//    CreationEngineGameLoop::Get();
-//    CreationEngineWeaponModule::Get();
     CreationEngineCameraManager::Get()->InstallHooks();
     CreationEngineRendererModule::Get()->InstallHooks();
-    UpscalerAfrNvidiaModule::Get();
-//    HavokModule::Get();
+    CreationEngineInputManager::Get()->Init();
     return Mod::on_initialize();
 }
 
@@ -28,11 +25,6 @@ void CreationEngineEntry::on_draw_ui()
         return;
     }
     auto vr = VR::get();
-    ImGui::Text("IPD from runtime: %f", vr->get_runtime()->get_ipd());
-    if(m_world_scale->draw("World Scale"))
-    {
-        GameFlow::gStore.internalSettings.worldScale = m_world_scale->value();
-    }
     if(m_hud_scale->draw("HUD Scale"))
     {
         GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
@@ -198,9 +190,9 @@ void CreationEngineEntry::on_draw_ui()
 #endif
 }
 
-void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
+void CreationEngineEntry::on_config_load(const utility::Config& cfg, bool set_defaults) {
     for (IModValue& option : m_options) {
-        option.config_load(cfg);
+        option.config_load(cfg, set_defaults);
     }
     ModConstants::dominantEye = m_dominant_eye->value();
     ModConstants::headTrackingMultiplier = m_head_tracking_multiplier->value();
@@ -211,7 +203,6 @@ void CreationEngineEntry::on_config_load(const utility::Config& cfg) {
     GameFlow::gStore.hudSettings.hudScale = m_hud_scale->value();
     GameFlow::gStore.hudSettings.perspective = (int) m_hud_perspective->value();
     GameFlow::gStore.internalSettings.alternativeJoyLayout = m_alternative_joy_layout->value();
-    GameFlow::gStore.internalSettings.worldScale = m_world_scale->value();
     GameFlow::gStore.internalSettings.decoupledPitch = m_decoupled_pitch->value();
 }
 

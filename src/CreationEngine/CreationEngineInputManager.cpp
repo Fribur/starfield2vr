@@ -88,8 +88,10 @@ void CreationEngineInputManager::UpdateDeviceState() {
     if (!vr->is_hmd_active()) {
         return;
     }
+    vr->update_action_states();
 //    spdlog::info("Updating input state fc[{}]", vr->m_frame_count);
 
-    vr->on_xinput_get_state(&report);
+    uint32_t retval;
+    vr->on_xinput_get_state(&retval, 0, (XINPUT_STATE*)&report);
     vigem_target_x360_update(client, pad, report);
 }

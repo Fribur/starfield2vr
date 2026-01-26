@@ -2,10 +2,11 @@
 #include <RE/N/NiCamera.h>
 #include <RE/N/NiMatrix3.h>
 #include <glm/vec3.hpp>
-#include <shared/sdk/Math.hpp>
-#include <utils/FunctionHook.h>
+#include <memory/FunctionHook.h>
 #include <RE/F/FirstPersonState.h>
 #include <RE/N/NiQuaternion.h>
+
+#include "math/Math.hpp"
 
 struct Matrix6x4f
 {

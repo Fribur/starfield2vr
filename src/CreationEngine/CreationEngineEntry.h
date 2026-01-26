@@ -1,7 +1,4 @@
 #pragma once
-#include <CreationEngine/CreationEngineCameraManager.h>
-#include <CreationEngine/CreationEngineRendererModule.h>
-#include <CreationEngine/UpscalerAfrNvidiaModule.h>
 #include <Mod.hpp>
 
 class CreationEngineEntry : public Mod
@@ -17,7 +14,7 @@ public:
 
     std::optional<std::string> on_initialize() override;
     void                       on_draw_ui() override;
-    void                       on_config_load(const utility::Config& cfg) override;
+    void                       on_config_load(const utility::Config& cfg, bool ) override;
     void                       on_config_save(utility::Config& cfg) override;
 
 private:
@@ -41,8 +38,7 @@ private:
     const ModSlider::Ptr m_hud_scale{ModSlider::create(generate_name("HUDScale"), 0.1, 1.0, 0.4) };
     const ModSlider::Ptr m_hud_perspective{ ModSlider::create(generate_name("HUDPerspective"), 0, 600, 150) };
     const ModToggle::Ptr m_alternative_joy_layout{ ModToggle::create(generate_name("JoyAlternativeLayout"), false) };
-    const ModSlider::Ptr m_world_scale{ModSlider::create(generate_name("World Scale"), 0.1, 3.0, 1.0) };
 
 
-    ValueList m_options{*m_dominant_eye, *m_head_tracking_multiplier, *m_head_tracking_type, *m_taa_anf_nvidia_fix, *m_disable_zoom, *m_hud_scale, *m_hud_perspective, *m_alternative_joy_layout, *m_world_scale, *m_decoupled_pitch, *m_pawn_control_rotation };
+    ValueList m_options{*m_dominant_eye, *m_head_tracking_multiplier, *m_head_tracking_type, *m_taa_anf_nvidia_fix, *m_disable_zoom, *m_hud_scale, *m_hud_perspective, *m_alternative_joy_layout, *m_decoupled_pitch, *m_pawn_control_rotation };
 };

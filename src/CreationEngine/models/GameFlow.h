@@ -30,7 +30,7 @@ namespace GameFlow {
 
     void renderMenu(std::string_view menuNameHash);
     MenuSettings getMenuSettings(std::string_view menuNameHash);
-    bool shouldShowFlatScreen();
+    bool isShowingMenu();
     bool isAimingDownSights();
     bool isWeaponDrawn();
     bool isImmovable();

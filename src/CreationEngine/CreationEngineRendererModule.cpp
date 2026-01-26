@@ -7,13 +7,14 @@
 #include "CreationEngineConstants.h"
 #include "CreationEngineSingletonManager.h"
 #include "REL/Relocation.h"
-#include "UpscalerAfrNvidiaModule.h"
 #include <CreationEngine/memory/offsets.h>
 #include <CreationEngine/models/GameFlow.h>
 #include <CreationEngine/models/ModSettingsStore.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <mods/VR.hpp>
 #include <safetyhook/easy.hpp>
+
+#include "ModSettings.h"
 
 uintptr_t onUpdateConstantBufferViewDetour(uint8_t copyPresentToPast, uint8_t orphoProjection, uintptr_t pCameraTransforms, uintptr_t vararg1Parent, uintptr_t vararg3Parent,
                                            double unk, char unk2, RE::RenderPassConstantBufferView* camerablocks)
@@ -163,16 +164,8 @@ void CreationEngineRendererModule::RenderGraphStart(RE::CreationRendererPrivate:
     auto vr = VR::get();
     if (m_startFramePass == pGraph && before) {
         GameFlow::resetGameState();
-    }
-    else if (m_endFramePass == pGraph) {
-        if (before) {
-            vr->on_pre_end_rendering(nullptr);
-        }
-        else {
-            vr->on_end_rendering(nullptr);
-        }
-    }
-    else if (!before && m_framePass == pGraph) {
+        ModSettings::g_internalSettings.showQuadDisplay = GameFlow::isShowingMenu();
+    } else if (!before && m_framePass == pGraph) {
         auto fc          = GameFlow::renderLoopFrameCount();
         auto context     = reinterpret_cast<RE::RenderGraphDataD3D12Context*>(pRenderGraphData->getCommandList());
         auto commandList = context->pID3D12CommandList;
@@ -335,12 +328,16 @@ uintptr_t CreationEngineRendererModule::setReflexMarkerInternal(uintptr_t rcx, u
     if ((marker == 6 || marker == 0 || marker == 1) && !engine_notified) {
         engine_notified = true;
         instance->SetWindowSize(0,0);
+        vr->on_wait_rendering(oldFrameIndex);
+        vr->m_engine_frame_count = oldFrameIndex;
+        vr->on_begin_rendering(oldFrameIndex);
+        vr->update_hmd_state(oldFrameIndex);
         g_framework->run_imgui_frame(false);
-        vr->on_pre_begin_rendering(nullptr);
-        vr->on_begin_rendering(nullptr);
+
+
         if(vr->get_runtime()->loaded) {
             frames_since_reset++;
-            if(vr->m_frame_count % 2 == 0) {
+            if(vr->m_engine_frame_count % 2 == 0) {
                 sync_marker_started = true;
             } else {
                 sync_marker_started = false;
@@ -353,6 +350,14 @@ uintptr_t CreationEngineRendererModule::setReflexMarkerInternal(uintptr_t rcx, u
         engine_notified = false;
     }
 
+    if (marker == 2) {
+        vr->m_render_frame_count = oldFrameIndex;
+    }
+
+    if (marker == 4) {
+        vr->m_presenter_frame_count = oldFrameIndex;
+    }
+
 
     if(vr->get_runtime()->loaded && marker == 1 && sync_marker_started) {
         /*
@@ -363,7 +368,7 @@ uintptr_t CreationEngineRendererModule::setReflexMarkerInternal(uintptr_t rcx, u
         sync_marker_started = false;
     } else if(frames_since_reset > 100 && marker > 1 && marker < 5 && sync_marker_started && vr->get_runtime()->loaded) {
         spdlog::info("Detected frame inconsistency, resetting frame sync m={}", marker);
-        vr->m_skip_frames = 1;
+        vr->m_skip_next_present = true;
         frames_since_reset = 0;
         sync_marker_started = false;
     }
