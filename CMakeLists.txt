@@ -13,160 +13,72 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set(CMAKE_OPTIMIZE_DEPENDENCIES ON)
 
 include(GNUInstallDirs)
+include(FetchContent)
 
-#add_compile_definitions(GLM_FORCE_LEFT_HANDED)
+# Configure Streamline version before loading vrframework
+set(STREAMLINE_VERSION "v2.4.11" CACHE STRING "Version of NVIDIA Streamline to use")
+set(INVERT_DEPTH_IN_SHADER OFF CACHE BOOL "Invert depth in motion vector correction shader")
 
-# CPM
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake)
-set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm)
+set(IMGUI_USER_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/imgui/imconfig.hpp")
+FetchContent_Declare(vrframework SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/vrframework)
+FetchContent_MakeAvailable(vrframework)
 
-# Dependencies
-#CPMAddPackage("gh:brofield/simpleini@4.20")
-#CPMAddPackage("gh:stevemk14ebr/PolyHook_2_0#master")
-# Target: minhook
-include("cmake/spdlog.cmake")
-include("cmake/minhook.cmake")
-include("cmake/glm.cmake")
 include("cmake/vigemclient.cmake")
-include("cmake/safetyhook.cmake")
-include("cmake/kananlib.cmake")
-include("cmake/directxtk.cmake")
-include("cmake/openxr.cmake")
-#include("cmake/streamline.cmake")
-#include("cmake/imgui.cmake")
 
-if(POLYHOOK2_FUNCTION_HOOK)
-  include("cmake/polyhook.cmake")
-  add_compile_definitions(POLYHOOK2_FUNCTION_HOOK)
-endif()
-# Check if we should use the full SDK or the lite version
+
 if(NOT USE_STARFIELD_SDK_LITE)
   add_subdirectory(extern/CommonLibSF)
   include("extern/CommonLibSF/CommonLibSF/cmake/CommonLibSF.cmake")
 else()
-  # Add the SDK-lite headers directory to the include path
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sdk-lite/include)
   add_compile_definitions(USE_STARFIELD_SDK_LITE)
 endif()
 
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-  @ONLY
-)
+add_library(common INTERFACE)
+target_link_libraries(vr_framework PRIVATE common)
 
-# Add headers
+
 file(
   GLOB_RECURSE
   headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
 )
 
-file(GLOB IMGUI_HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sf2-imgui/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sf2-imgui/*.hpp
-)
-
-list(REMOVE_ITEM headers ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h)
-list(APPEND headers ${IMGUI_HEADERS})
-
-
-# Add sources
 file(
   GLOB_RECURSE
   sources
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
 )
 
-file(GLOB IMGUI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/imguizmo/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/imnodes/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sf2-imgui/*.cpp
-)
+add_library(${PROJECT_NAME} SHARED ${headers} ${sources})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-list(APPEND sources ${IMGUI_SOURCES})
-if(NOT USE_STARFIELD_SDK_LITE)
-  # Create plugin
-  add_commonlibsf_plugin(
-    ${PROJECT_NAME}
-    AUTHOR sergii
-    SOURCES ${headers} ${sources}
-  )
-else()
-  add_library(${PROJECT_NAME} SHARED ${headers} ${sources})
-
-  # Set basic properties for the target
-#  set_target_properties(${PROJECT_NAME} PROPERTIES
-#          CXX_STANDARD 23
-#          CXX_STANDARD_REQUIRED ON
-#  )
-  target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-endif()
+#target_compile_definitions(common INTERFACE MOTION_VECTOR_REPROJECTION)
+#target_compile_definitions(common INTERFACE VRMOD_EXPERIMENTAL)
+#target_compile_definitions(common INTERFACE DEBUG_PROFILING_ENABLED)
+target_compile_definitions(common INTERFACE DISABLE_WINDOW_SIZE_FIXES)
+target_compile_definitions(common INTERFACE HOOK_XINPUT)
+target_compile_definitions(common INTERFACE HOOK_DX12_FIRST)
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-#find_path(DIRECTX_INCLUDE_DIR d3dcompiler.h)
-#find_library(D3D_COMPILER_LIB d3dcompiler.lib)
-target_link_libraries("${PROJECT_NAME}" PUBLIC
-        spdlog
-        glm
-        bddisasm
-        shlwapi
-        minhook
-        safetyhook
-        ViGEmClient
-        kananlib
-        openxr_loader
-        delayimp
-        DirectXTK12
-        "${CMAKE_CURRENT_SOURCE_DIR}/extern/openvr/lib/win64/openvr_api.lib"
-)
 
-if(POLYHOOK2_FUNCTION_HOOK)
-    target_link_libraries("${PROJECT_NAME}" PUBLIC
-            PolyHook_2
-    )
-endif()
+target_link_libraries("${PROJECT_NAME}" PUBLIC common vr_framework::vr_framework)
+target_link_libraries("${PROJECT_NAME}" PUBLIC ViGEmClient)
 
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-    $<INSTALL_INTERFACE:src>
-    $<BUILD_INTERFACE:${SimpleIni_SOURCE_DIR}>
-    "extern/openvr/headers"
-    "extern/nlohmann"
-    "${minhook_SOURCE_DIR}/include"
-    "${vigemclient_SOURCE_DIR}/include"
-    "${minhook_SOURCE_DIR}/src/hde"
-    "${CMAKE_CURRENT_SOURCE_DIR}/extern/Streamline/include"
-    "${openxr_SOURCE_DIR}/src"
-    "${spdlog_SOURCE_DIR}/src"
-    "${glm_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui"
-    "${CMAKE_CURRENT_SOURCE_DIR}/extern/imguizmo"
-    "${CMAKE_CURRENT_SOURCE_DIR}/extern/imnodes"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sf2-imgui"
-  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${SHADER_HEADER_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    "${vigemclient_SOURCE_DIR}/include"
 )
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC
-        "IMGUI_USER_CONFIG=\"${CMAKE_CURRENT_SOURCE_DIR}/sf2-imgui/sf2_imconfig.hpp\""
-)
 
 target_precompile_headers(
   ${PROJECT_NAME}
   PRIVATE
-    include/PCH.h
-#    ${SimpleIni_SOURCE_DIR}/SimpleIni.h
+    pch/pch.h
 )
 
 target_compile_features(
@@ -185,92 +97,23 @@ set_target_properties(
   ${PROJECT_NAME}
   PROPERTIES
     LINK_FLAGS
-    "/DELAYLOAD:openvr_api.dll /DELAYLOAD:openxr_loader.dll /DELAYLOAD:d3d12.dll /DELAYLOAD:D3DCOMPILER_47.dll"
-)
-if(SFVR_EXPERIMENTAL)
-  add_compile_definitions(SFVR_EXPERIMENTAL)
-  set(SHADER_HEADER_DIR ${CMAKE_BINARY_DIR}/shader-headers)
-  file(MAKE_DIRECTORY ${SHADER_HEADER_DIR})
-
-  # Build HLSL shaders
-  add_custom_target(shaders)
-
-  set_source_files_properties(fxaa_ps.hlsl PROPERTIES ShaderType "ps_5_0" Entry "ps_main")
-  set_source_files_properties(ssaa_ps.hlsl PROPERTIES ShaderType "ps_6_1" Entry "ps_main")
-  set_source_files_properties(fxaa_luma_ps.hlsl PROPERTIES ShaderType "ps_5_0" Entry "ps_main")
-  set_source_files_properties(rectangle_vs.hlsl PROPERTIES ShaderType "vs_5_0" Entry "vs_main")
-  set_source_files_properties(smaa_depth_linear_vs.hlsl PROPERTIES ShaderType "vs_4_1" Entry "vs_main")
-  set_source_files_properties(smaa_depth_linear_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_luma_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_luma_predication_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_color_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_color_predication_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_depth_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_edge_detect_vs.hlsl PROPERTIES ShaderType "vs_4_1" Entry "vs_main")
-  set_source_files_properties(smaa_blending_weight_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_blending_weight_vs.hlsl PROPERTIES ShaderType "vs_4_1" Entry "vs_main")
-  set_source_files_properties(smaa_final_ps.hlsl PROPERTIES ShaderType "ps_4_1" Entry "ps_main")
-  set_source_files_properties(smaa_final_vs.hlsl PROPERTIES ShaderType "vs_4_1" Entry "vs_main")
-
-  set_source_files_properties(smaa_fake_ps.hlsl PROPERTIES ShaderType "ps_6_1" Entry "ps_main")
-  set_source_files_properties(smaa_fake_vs.hlsl PROPERTIES ShaderType "vs_6_1" Entry "vs_main")
-
-  set_source_files_properties(dlss_debug_vs.hlsl PROPERTIES ShaderType "vs_6_1" Entry "vs_main")
-  set_source_files_properties(dlss_debug_ps.hlsl PROPERTIES ShaderType "ps_6_1" Entry "ps_main")
-
-  set_source_files_properties(taa_debug_vs.hlsl PROPERTIES ShaderType "vs_6_1" Entry "vs_main")
-  set_source_files_properties(taa_debug_ps.hlsl PROPERTIES ShaderType "ps_6_1" Entry "ps_main")
-
-  set(HLSL_SHADER_FILES
-          fxaa_ps.hlsl
-          smaa_depth_linear_vs.hlsl
-          smaa_depth_linear_ps.hlsl
-          smaa_edge_detect_luma_ps.hlsl
-          smaa_edge_detect_luma_predication_ps.hlsl
-          smaa_edge_detect_color_ps.hlsl
-          smaa_edge_detect_color_predication_ps.hlsl
-          smaa_edge_detect_depth_ps.hlsl
-          smaa_edge_detect_vs.hlsl
-          smaa_blending_weight_vs.hlsl
-          smaa_blending_weight_ps.hlsl
-          smaa_final_ps.hlsl
-          smaa_final_vs.hlsl
-          smaa_fake_ps.hlsl
-          smaa_fake_vs.hlsl
-          ssaa_ps.hlsl
-          fxaa_luma_ps.hlsl
-          rectangle_vs.hlsl
-          dlss_debug_vs.hlsl
-          dlss_debug_ps.hlsl
-          taa_debug_vs.hlsl
-          taa_debug_ps.hlsl
+    "/DELAYLOAD:openvr_api.dll /DELAYLOAD:d3d12.dll /DELAYLOAD:D3DCOMPILER_47.dll"
   )
 
-  foreach(FILE ${HLSL_SHADER_FILES})
-    get_filename_component(FILE_WE ${FILE} NAME_WE)
-  #  list(APPEND CSO_SHADER_FILES ${CMAKE_BINARY_DIR}/${FILE_WE}.cso)
-    get_source_file_property(shadertype ${FILE} ShaderType)
-    get_source_file_property(functionentry ${FILE} Entry)
-    add_custom_command(TARGET shaders
-                       COMMAND dxc.exe /nologo /E${functionentry} /T${shadertype} $<IF:$<CONFIG:DEBUG>,/Od,/O3> /Zi /Fo ${CMAKE_BINARY_DIR}/${FILE_WE}.cso /Fh ${SHADER_HEADER_DIR}/${FILE_WE}.h /Fd ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
-                       MAIN_DEPENDENCY ${FILE}
-                       COMMENT "HLSL ${FILE}"
-                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/
-                       VERBATIM)
-  endforeach(FILE)
-
-  add_dependencies(${PROJECT_NAME} shaders)
+if(NOT DEFINED HOOK_METHOD)
+    set(HOOK_METHOD "dxgi")
 endif()
 
-
-#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#                  COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:${PROJECT_NAME}>
-#                  COMMAND_EXPAND_LISTS)
-if(NOT USE_DXGI_HOOK)
+if(HOOK_METHOD STREQUAL "dinput8")
   set(OUTPUT_NAME "dinput8")
-else()
+elseif(HOOK_METHOD STREQUAL "dxgi")
   set(OUTPUT_NAME "dxgi")
-  add_compile_definitions(USE_DXGI_HOOK)
+  target_compile_definitions(common INTERFACE USE_DXGI_HOOK)
+elseif(HOOK_METHOD STREQUAL "PHYSX")
+  set(OUTPUT_NAME "PhysX3Cooking_x64")
+  target_compile_definitions(common INTERFACE USE_PHYSX_HOOK)
+elseif(HOOK_METHOD STREQUAL "inject")
+  set(OUTPUT_NAME "vrmod")
 endif()
 
 if(XBOX_STORE)
@@ -283,6 +126,9 @@ if(SIGNATURE_SCAN)
   add_compile_definitions(SIGNATURE_SCAN)
 endif()
 
+if(COMPILE_SHADERS)
+  target_compile_definitions(common INTERFACE COMPILE_SHADERS)
+endif()
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -306,14 +152,6 @@ add_custom_command(
     ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/artifact/Mod${BUILD_NAME}/sfvr
   COMMAND
     ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/artifact/Mod${BUILD_NAME}/sfvr
-#[[  COMMAND
-    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Config/${PROJECT_NAME}.ini ${CMAKE_CURRENT_SOURCE_DIR}/artifact/Mod${BUILD_NAME}/sfvr]]
-#   COMMAND
-#    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\Data\\SFSE\\Plugins"
-#  COMMAND
-#    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
-  #COMMAND
-  #  ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\starfield_vr.pdb"
 )
 
 if(XBOX_STORE)
@@ -331,10 +169,6 @@ else ()
           ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Starfield\\$<TARGET_FILE_NAME:${PROJECT_NAME}>"
   )
 endif()
-
-
-file(GLOB_RECURSE OUTPUT_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/artifact/*.dll)
-file(GLOB_RECURSE OUTPUT_PDBS ${CMAKE_CURRENT_SOURCE_DIR}/artifact/*.pdb)
 
 set_property(
   TARGET ${PROJECT_NAME}

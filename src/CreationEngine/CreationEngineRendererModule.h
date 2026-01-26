@@ -3,9 +3,10 @@
 #include <_deps/directxtk12-src/Src/PlatformHelpers.h>
 #include <_deps/directxtk12-src/Src/d3dx12.h>
 #include <safetyhook/inline_hook.hpp>
-#include <shared/sdk/Math.hpp>
-#include <utils/FunctionHook.h>
+#include <memory/FunctionHook.h>
 #include <windef.h>
+
+#include "math/Math.hpp"
 using Microsoft::WRL::ComPtr;
 
 namespace RE

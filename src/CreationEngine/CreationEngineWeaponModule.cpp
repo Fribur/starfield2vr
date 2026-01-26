@@ -2,6 +2,8 @@
 #include "CreationEngineSingletonManager.h"
 #include <CreationEngine/memory/ScanHelper.h>
 #include <CreationEngine/models/GameFlow.h>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/matrix_major_storage.hpp>
 
 void CreationEngineWeaponModule::install_hooks() {
 

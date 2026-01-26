@@ -86,9 +86,9 @@ void GameSettingsComponent::on_draw_ui()
 #endif
 }
 
-void GameSettingsComponent::on_config_load(const utility::Config& cfg) {
+void GameSettingsComponent::on_config_load(const utility::Config& cfg, bool set_default) {
     for (IModValue& option : m_options) {
-        option.config_load(cfg);
+        option.config_load(cfg, set_default);
     }
     if(m_override_weapon_fov->value()) {
         CreationEngineSettings::Get()->set_setting("fFPGeometryFOV:Camera", CreationEngineSettings::SettingType::kINISetting, m_weapon_fov->value());

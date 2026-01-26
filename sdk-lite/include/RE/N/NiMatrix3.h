@@ -8,6 +8,7 @@
 
 namespace RE
 {
+	static float HALF_PI = glm::pi<float>() / 2.0f;
 	class alignas(0x10) NiMatrix3
 	{
 	public:
@@ -103,7 +104,6 @@ namespace RE
 			return func(this, a_x, a_y, a_z);
 		}*/
 
-        static constexpr float HALF_PI = glm::pi<float>() / 2.0f;
 
 
         //YXZ

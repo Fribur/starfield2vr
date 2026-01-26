@@ -1,53 +1,6 @@
-#define DXGI_INJECTION
-#include "SFVR.hpp"
-//#include "Settings.h"
-#ifndef USE_DXGI_HOOK
-#include "dinput8proxy.h"
-#else
+#include "ModConfig.h"
+#include "Framework.hpp"
 #include "dgxiProxy.h"
-#endif
-
-//#include "framework.h"
-#include <CreationEngine/CreationEngineEntry.h>
-
-#ifndef DXGI_INJECTION
-// SFSE message listener, use this to do stuff at specific moments during runtime
-void Listener(SFSE::MessagingInterface::Message* message) noexcept
-{
-    switch (message->type) {
-    case SFSE::MessagingInterface::kPostLoad: {
-    }
-    case SFSE::MessagingInterface::kPostPostLoad: {
-    }
-    case SFSE::MessagingInterface::kPostDataLoad: {
-        Settings::LoadSettings();
-        //Hooks::Install();
-        auto ce = CreationEngineHook();
-
-    }
-    case SFSE::MessagingInterface::kPostPostDataLoad: {
-    }
-    default: {
-    }
-    }
-}
-
-// Main SFSE plugin entry point, initialize everything here
-SFSEPluginLoad(const SFSE::LoadInterface* sfse)
-{
-    Init(sfse);
-
-    logger::info("{} {} is loading...", Plugin::Name, Plugin::Version.string());
-
-    if (const auto messaging{ SFSE::GetMessagingInterface() }; !messaging->RegisterListener(Listener))
-        return false;
-
-    logger::info("{} has finished loading.", Plugin::Name);
-
-    return true;
-}
-#else
-
 
 bool verifyLeftHandedCoordinates() {
     // Create forward vector (in left-handed, +Z is forward)
@@ -68,20 +21,15 @@ bool verifyLeftHandedCoordinates() {
 
 
 void InitThread(HINSTANCE hModule) {
-//    Settings::LoadSettings();
-//    VRFramework::setup(hModule);
-//    hook_d3d12();
-    g_framework = std::make_unique<SFVR>(hModule);
+    Sleep(5000);
+    g_framework = std::make_unique<Framework>(hModule);
 #ifdef GLM_FORCE_LEFT_HANDED
     spdlog::info("GLM_FORCE_LEFT_HANDED is defined function={} clip={}", verifyLeftHandedCoordinates(), GLM_CONFIG_CLIP_CONTROL);
     assert(verifyLeftHandedCoordinates());
 #else
     spdlog::info("GLM_FORCE_LEFT_HANDED is not defined");
 #endif
-//    g_d3d12_callback_manager = new D3D12CallBackManager(hModule);
-//    CreationEngineEntry::Get();
-//    VRFramework::XInputHook::Get()->hook_gaming_input();
-    //Hooks::Install();
+
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -101,4 +49,3 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
     }
     return TRUE;
 }
-#endif

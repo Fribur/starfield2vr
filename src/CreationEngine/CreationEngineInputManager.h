@@ -1,6 +1,6 @@
 #pragma once
 #include <ViGEm/Client.h>
-#include <utils/FunctionHook.h>
+#include <memory/FunctionHook.h>
 
 #pragma comment(lib, "setupapi.lib")
 

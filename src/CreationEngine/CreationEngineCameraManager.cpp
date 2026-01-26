@@ -15,7 +15,29 @@
 #include <cstdlib>
 #include <glm/gtx/vector_angle.hpp>
 #include <mods/VR.hpp>
-#include <utility/REMath.hpp>
+
+#include "ModSettings.h"
+
+namespace {
+    const  glm::mat4 permutation_pre = {
+        1, 0, 0, 0,
+        0, 0, 1, 0,
+        0, -1, 0, 0,
+        0, 0,  0, 1
+    };
+    const glm::mat4 permutation_post = glm::transpose(permutation_pre);
+
+    glm::mat4 to_havok_space(const glm::mat4& mat) {
+        return permutation_pre * mat * permutation_post;
+    }
+
+    glm::mat4 from_havok_space(const glm::mat4& mat) {
+        return permutation_post * mat * permutation_pre;
+    }
+    float yaw_offset{0.0f};
+
+
+}
 
 
 void onSetNimFrustumDetour(RE::NiCamera *camera, RE::NiFrustum *frustum) {
@@ -72,7 +94,6 @@ void CreationEngineCameraManager::InstallHooks() {
     m_onScaleformSetViewPortHook->create();
 }
 
-float yaw_offset{0.0f};
 
 RE::NiAVObject *getCameraRootNode() {
     auto playerCamera = CreationEngineSingletonManager::GetPlayerCameraSingleton();
@@ -122,7 +143,7 @@ void CreationEngineCameraManager::onNiAVObjectUpdateWorld(RE::NiAVObject *obj, R
     using func_t = decltype(onNiAVObjectUpdateWorld);
     static auto original_func = instance->m_onNiAVObjectUpdateWorldHook->get_original<func_t>();
     static auto vr = VR::get();
-    if (vr->is_hmd_active() && !GameFlow::shouldShowFlatScreen()) {
+    if (vr->is_hmd_active() && !ModSettings::showFlatScreenDisplay()) {
         auto camera_root = getCameraRootNode();
         if (obj->parent && camera_root && camera_root == obj->parent) {
             original_func(obj, a_data);
@@ -149,9 +170,7 @@ CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t *thisMovie
     auto cc = reinterpret_cast<RE::Scaleform::GFx::MovieImpl *>(thisMovie);
     auto file_url = cc->GetMovieDef()->GetFileURL();
     GameFlow::renderMenu(file_url);
-    if (GameFlow::shouldShowFlatScreen() || !vr->is_hmd_active()) {
-        return;
-    }
+
     auto backbuffer_size = vr->get_backbuffer_size();
     auto viewport_buffer_width = viewport->bufferWidth;
     auto viewport_buffer_height = viewport->bufferHeight;
@@ -160,6 +179,10 @@ CreationEngineCameraManager::onScaleformSetViewPortInternal(uintptr_t *thisMovie
     int offset_top = 0;
 
     auto settings = GameFlow::getMenuSettings(file_url);
+
+    if (ModSettings::showFlatScreenDisplay() || !vr->is_hmd_active()) {
+        return;
+    }
 
     auto width_multiplier = settings.hud_scale;
     auto height_multiplier = settings.hud_scale;
@@ -257,7 +280,7 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
     static auto originalRotation = worldCamera->local.rotate;
     static auto originalPosition = worldCamera->local.translate;
 
-    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
+    if (!vr->is_hmd_active() || ModConstants::cameraShake || ModSettings::showFlatScreenDisplay()) {
         worldCamera->local.rotate = originalRotation;
         worldCamera->local.translate = originalPosition;
         return;
@@ -265,26 +288,26 @@ void CreationEngineCameraManager::UpdateWorldCamera() {
 
     if(!GameFlow::isImmovable() && !GameFlow::isControlledByAI() && GameFlow::isInFirstPerson()) {
         auto hmd_transform = vr->get_transform(0);
-        auto standing_origin = vr->get_standing_origin();
-        hmd_transform[3].x -= standing_origin.x;
-        hmd_transform[3].y -= standing_origin.y;
-        hmd_transform[3].z -= standing_origin.z;
+        auto standing_origin = vr->get_transform_offset();
+        hmd_transform[3].x -= standing_origin[3].x;
+        hmd_transform[3].y -= standing_origin[3].y;
+        hmd_transform[3].z -= standing_origin[3].z;
         auto eye = vr->get_current_eye_transform();
         hmd_transform      = glm::inverse(glm::extractMatrixRotation(hmd_transform)) * hmd_transform * eye;
-        hmd_transform = utility::math::to_havok_space(hmd_transform);
+        hmd_transform = to_havok_space(hmd_transform);
         worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3*) & hmd_transform;
         worldCamera->local.translate.x = hmd_transform[3][0];
         worldCamera->local.translate.y = hmd_transform[3][1];
         worldCamera->local.translate.z = hmd_transform[3][2];
     } else {
         auto head_rotation = vr->get_transform(0);
-        auto standing_origin = vr->get_standing_origin();
-        head_rotation[3].x -= standing_origin.x;
-        head_rotation[3].y -= standing_origin.y;
-        head_rotation[3].z -= standing_origin.z;
+        auto standing_origin = vr->get_transform_offset();
+        head_rotation[3].x -= standing_origin[3].x;
+        head_rotation[3].y -= standing_origin[3].y;
+        head_rotation[3].z -= standing_origin[3].z;
         auto eye = vr->get_current_eye_transform();
         head_rotation = head_rotation * eye;
-        head_rotation = utility::math::to_havok_space(head_rotation);
+        head_rotation = to_havok_space(head_rotation);
         worldCamera->local.rotate = originalRotation * *(RE::NiMatrix3 *) &head_rotation;
         worldCamera->local.translate.x = head_rotation[3][0];
         worldCamera->local.translate.y = head_rotation[3][1];
@@ -298,7 +321,7 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
     static auto original_func = instance->m_onGetCameraRotationHook->get_original<decltype(onFPSGetCameraRotation)>();
     original_func(fps, quat_out);
     static auto vr = VR::get();
-    if (!vr->is_hmd_active() || ModConstants::cameraShake || GameFlow::shouldShowFlatScreen()) {
+    if (!vr->is_hmd_active() || ModConstants::cameraShake || ModSettings::showFlatScreenDisplay()) {
         yaw_offset = 0.0f;
         return;
     }
@@ -312,7 +335,7 @@ void CreationEngineCameraManager::onFPSGetCameraRotation(RE::FirstPersonState *f
         havok_rotation.ToEulerAnglesXYZ(pitch, roll, yaw);
 
         auto current_hmd_rotation = vr->get_rotation(0);
-        auto rotation_quat = glm::normalize(glm::quat_cast(utility::math::to_havok_space(current_hmd_rotation)));
+        auto rotation_quat = glm::normalize(glm::quat_cast(to_havok_space(current_hmd_rotation)));
         auto ni_hmd_rotation = RE::NiQuaternion(rotation_quat.w, rotation_quat.x, rotation_quat.y, rotation_quat.z);
         {
             if (GameFlow::gStore.internalSettings.pawnControl) {

@@ -19,13 +19,11 @@ namespace GameFlow
             int perspective{150};
         } hudSettings{};
         struct InternalSettings {
-            bool enforceFlatScreen{false};
             int headAimingAbsolute{1};
             float flatScreenDistance{1.5f};
             bool nvidiaAndTAAfix{true};
             bool preventZoom{false};
             bool alternativeJoyLayout{false};
-            float worldScale{1.0f};
             bool decoupledPitch{false};
             bool pawnControl{true};
         } internalSettings{};
